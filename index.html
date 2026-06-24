@@ -1,247 +1,979 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nimbus — AI Sales Platform</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { overflow-x: hidden; background: #04050f; color: #e8e8f0; font-family: 'Inter', sans-serif; font-weight: 300; -webkit-font-smoothing: antialiased; }
-    #loader { position: fixed; inset: 0; z-index: 9999; background: #04050f; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s ease, visibility 1s ease; }
-    #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-    #loader .brand { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: 0.2em; color: #fff; margin-bottom: 40px; }
-    #loader .bar-track { width: 160px; height: 1px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
-    #loader .bar-fill { position: absolute; top: 0; left: 0; width: 0%; height: 100%; background: linear-gradient(90deg, #6C63FF, #a78bfa); animation: loadbar 2s ease-out forwards; }
-    #loader .sub { margin-top: 20px; font-size: 10px; letter-spacing: 0.3em; color: rgba(255,255,255,0.3); text-transform: uppercase; }
-    @keyframes loadbar { to { width: 100%; } }
-    canvas { position: fixed; top: 0; left: 0; z-index: 0; }
-    .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 40%, rgba(4,5,15,0.7) 100%); }
-    .scanlines { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px); }
-    .scroll-bar { position: fixed; top: 0; left: 0; height: 1px; background: linear-gradient(90deg, #6C63FF, #a78bfa); z-index: 200; width: 0%; transition: width 0.1s linear; }
-    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; transition: all 0.4s ease; }
-    nav.scrolled { padding: 16px 48px; background: rgba(4,5,15,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.04); }
-    .nav-brand { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 0.05em; color: #fff; text-decoration: none; }
-    .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-links a { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.5); text-decoration: none; letter-spacing: 0.05em; transition: color 0.2s; }
-    .nav-links a:hover { color: #fff; }
-    .nav-cta { font-size: 13px; font-weight: 500; color: #04050f; background: #fff; padding: 10px 22px; border-radius: 100px; text-decoration: none; letter-spacing: 0.02em; transition: all 0.2s; }
-    .nav-cta:hover { background: #a78bfa; color: #fff; }
-    .scroll-container { position: relative; z-index: 2; pointer-events: none; }
-    .section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 5vh 8vw; position: relative; }
-    #s0 { min-height: 180vh; } #s1 { min-height: 120vh; } #s2 { min-height: 120vh; } #s3 { min-height: 120vh; } #s4 { min-height: 100vh; }
-    .content { pointer-events: auto; max-width: 580px; opacity: 0; transform: translateY(50px); transition: opacity 0.8s ease, transform 0.8s ease; }
-    .content.visible { opacity: 1; transform: translateY(0); }
-    .content.left { margin-right: auto; } .content.right { margin-left: auto; } .content.center { text-align: center; margin: 0 auto; }
-    .glass { background: rgba(10,10,30,0.5); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 40px 48px; position: relative; overflow: hidden; }
-    .glass::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(108,99,255,0.6), transparent); }
-    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: #6C63FF; margin-bottom: 24px; }
-    .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: #6C63FF; animation: pulse-dot 2s ease-in-out infinite; }
-    @keyframes pulse-dot { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
-    h1 { font-family: 'Syne', sans-serif; font-size: clamp(3.2rem, 7vw, 6rem); font-weight: 800; line-height: 1.0; letter-spacing: -0.02em; color: #fff; margin-bottom: 28px; }
-    h1 .accent { background: linear-gradient(135deg, #6C63FF, #a78bfa, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin-bottom: 20px; }
-    .body-text { font-size: 16px; line-height: 1.8; color: rgba(232,232,240,0.6); margin-bottom: 20px; }
-    .stats-row { display: flex; gap: 40px; margin-top: 40px; flex-wrap: wrap; }
-    .stat-num { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff; line-height: 1; }
-    .stat-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 6px; }
-    .feature-list { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
-    .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; background: rgba(108,99,255,0.05); border: 1px solid rgba(108,99,255,0.1); border-radius: 12px; transition: border-color 0.2s, background 0.2s; }
-    .feature-item:hover { border-color: rgba(108,99,255,0.3); background: rgba(108,99,255,0.08); }
-    .feature-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: #6C63FF; letter-spacing: 0.1em; min-width: 28px; margin-top: 2px; }
-    .feature-body h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .feature-body p { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.45); margin: 0; }
-    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
-    .plan-card { background: rgba(10,10,30,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px 24px; position: relative; transition: border-color 0.3s, transform 0.3s; }
-    .plan-card:hover { border-color: rgba(108,99,255,0.3); transform: translateY(-4px); }
-    .plan-card.featured { border-color: rgba(108,99,255,0.4); background: rgba(108,99,255,0.08); }
-    .plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #6C63FF, #a78bfa); color: #fff; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 100px; white-space: nowrap; }
-    .plan-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
-    .plan-price { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff; line-height: 1; }
-    .plan-price span { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.35); }
-    .plan-features { list-style: none; margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
-    .plan-features li { font-size: 13px; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 8px; }
-    .plan-features li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: #6C63FF; flex-shrink: 0; }
-    .plan-btn { display: block; margin-top: 24px; padding: 12px; text-align: center; text-decoration: none; font-size: 13px; font-weight: 500; letter-spacing: 0.05em; border-radius: 8px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
-    .plan-card.featured .plan-btn { background: linear-gradient(135deg, #6C63FF, #a78bfa); border: none; color: #fff; }
-    .plan-btn:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.4); color: #fff; }
-    .cta-row { display: flex; align-items: center; gap: 16px; margin-top: 36px; flex-wrap: wrap; }
-    .btn-primary { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; color: #fff; background: linear-gradient(135deg, #6C63FF, #a78bfa); padding: 14px 32px; border-radius: 100px; text-decoration: none; transition: all 0.3s; box-shadow: 0 0 40px rgba(108,99,255,0.3); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(108,99,255,0.5); }
-    .btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
-    .btn-ghost:hover { color: #fff; }
-    .btn-ghost .arrow { transition: transform 0.2s; }
-    .btn-ghost:hover .arrow { transform: translateX(4px); }
-    .trust-row { display: flex; align-items: center; gap: 24px; margin-top: 48px; flex-wrap: wrap; }
-    .trust-item { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); }
-    .trust-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.1); }
-    footer { position: relative; z-index: 2; padding: 40px 48px; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; }
-    footer .brand { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: rgba(255,255,255,0.3); }
-    footer .links { display: flex; gap: 24px; }
-    footer .links a { font-size: 12px; color: rgba(255,255,255,0.2); text-decoration: none; transition: color 0.2s; }
-    footer .links a:hover { color: rgba(255,255,255,0.6); }
-    footer .copy { font-size: 12px; color: rgba(255,255,255,0.15); }
-    @media (max-width: 768px) { nav { padding: 20px 24px; } nav.scrolled { padding: 14px 24px; } .nav-links { display: none; } .section { padding: 5vh 6vw; } .glass { padding: 28px 24px; } .pricing-grid { grid-template-columns: 1fr; } .stats-row { gap: 24px; } footer { flex-direction: column; gap: 16px; text-align: center; } }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #04050f;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --accent: #6C63FF;
+      --accent-glow: rgba(108,99,255,0.3);
+      --text: #e8e8f0;
+      --muted: rgba(232,232,240,0.45);
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-weight: 300; min-height: 100vh; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    input, select, textarea, button { font-family: 'Inter', sans-serif; outline: none; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+
+    /* Canvas background */
+    #bg-canvas { position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none; }
+    .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(4,5,15,0.85) 100%); }
+
+    /* Everything above canvas */
+    #root-ui { position: relative; z-index: 2; min-height: 100vh; }
+
+    /* Loader */
+    #loader { position: fixed; inset: 0; z-index: 9999; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.8s ease; }
+    #loader.fade { opacity: 0; pointer-events: none; }
+    #loader .l-brand { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+      letter-spacing: 0.2em; color: #fff; margin-bottom: 32px; }
+    #loader .l-track { width: 140px; height: 1px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    #loader .l-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #6C63FF, #a78bfa);
+      animation: lbar 1.8s ease-out forwards; }
+    #loader .l-sub { margin-top: 16px; font-size: 10px; letter-spacing: 0.3em; color: rgba(255,255,255,0.25); text-transform: uppercase; }
+    @keyframes lbar { to { width: 100%; } }
+
+    /* Glass card */
+    .glass { background: var(--surface); border: 1px solid var(--border);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 16px; }
+    .glass-sm { background: var(--surface); border: 1px solid var(--border);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 10px; }
+
+    /* Buttons */
+    .btn { padding: 11px 22px; border-radius: 10px; border: none; background: var(--accent);
+      color: #fff; font-weight: 600; font-size: 14px; font-family: 'Inter', sans-serif;
+      transition: all 0.2s; box-shadow: 0 0 20px var(--accent-glow); }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 0 32px var(--accent-glow); }
+    .btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      box-shadow: none; }
+    .btn-ghost:hover { background: var(--surface-hover); box-shadow: none; }
+    .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 8px; }
+
+    /* NAV */
+    #nav { border-bottom: 1px solid var(--border); padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between; height: 60px;
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(4,5,15,0.7); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+    .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+      letter-spacing: 0.05em; color: #fff; margin-right: 24px;
+      background: linear-gradient(135deg, #fff 30%, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-tabs { display: flex; align-items: stretch; height: 60px; gap: 4px; }
+    .nav-tab { background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--muted); font-weight: 400; font-size: 13px; padding: 0 16px; height: 60px;
+      transition: all 0.2s; letter-spacing: 0.01em; }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: #fff; font-weight: 600; border-bottom-color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .plan-pill { font-size: 10px; padding: 3px 10px; border-radius: 20px;
+      background: rgba(108,99,255,0.15); color: var(--accent); font-weight: 700;
+      letter-spacing: 0.08em; border: 1px solid rgba(108,99,255,0.3); }
+    .nav-email { color: var(--muted); font-size: 12px; }
+
+    /* CONTENT */
+    #content { max-width: 980px; margin: 0 auto; padding: 32px 28px; }
+    .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Section heading */
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 24px; margin-bottom: 4px; }
+    .section-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+    /* CAP BAR */
+    #cap-bar { padding: 16px 20px; margin-bottom: 20px; }
+    .cap-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+    #cap-track { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+    #cap-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.5s ease;
+      box-shadow: 0 0 8px var(--accent-glow); }
+    #cap-msg { margin-top: 10px; font-size: 12px; }
+
+    /* PIPELINE */
+    .lead-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; margin-bottom: 8px;
+      transition: background 0.2s; }
+    .lead-row:hover { background: var(--surface-hover); }
+    .lead-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(108,99,255,0.3), rgba(167,139,250,0.2));
+      border: 1px solid rgba(108,99,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); font-weight: 700; font-size: 15px; font-family: 'Syne', sans-serif; }
+    .lead-info { flex: 1; min-width: 0; }
+    .lead-name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lead-sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .lead-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .status-pill { font-size: 10px; padding: 3px 9px; border-radius: 20px; font-weight: 700; letter-spacing: 0.05em; }
+    .score-num { font-weight: 700; font-size: 13px; font-family: 'Syne', sans-serif; min-width: 28px; text-align: right; }
+    .meta-tag { font-size: 11px; color: var(--muted); }
+
+    /* FIELD */
+    .field { margin-bottom: 16px; }
+    .field label { color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 6px; }
+    .field input, .field select, .field textarea {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 14px; color: var(--text); font-size: 14px;
+      transition: border-color 0.2s; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: rgba(108,99,255,0.5); }
+    .field select { appearance: none; }
+    .field textarea { resize: vertical; }
+
+    /* AUTH */
+    #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-box { width: 400px; padding: 40px; }
+    .auth-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px;
+      letter-spacing: 0.05em; text-align: center; margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 20%, #a78bfa 80%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .auth-sub { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    .auth-toggle-row { text-align: center; margin-top: 20px; color: var(--muted); font-size: 13px; }
+    .auth-toggle-row a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+    /* MESSAGES */
+    .msg-error { color: var(--danger); font-size: 13px; margin-bottom: 14px; }
+    .msg-success { color: var(--success); font-size: 13px; margin-bottom: 14px; }
+
+    /* MODAL */
+    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(4,5,15,0.85);
+      align-items: center; justify-content: center; z-index: 999;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    #modal-overlay.open { display: flex; }
+    #modal-box { width: 440px; max-width: 95vw; padding: 32px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; line-height: 1; }
+
+    /* FOLLOW-UP */
+    .fu-layout { display: flex; gap: 18px; flex-wrap: wrap; }
+    .fu-sidebar { flex: 0 0 210px; display: flex; flex-direction: column; gap: 6px; }
+    .fu-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); transition: all 0.2s; }
+    .fu-item:hover { background: var(--surface-hover); }
+    .fu-item.active { background: rgba(108,99,255,0.12); border-color: rgba(108,99,255,0.4); }
+    .fu-main { flex: 1; min-width: 280px; }
+    .output-box { padding: 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.7; margin-top: 14px; }
+
+    /* CHAT */
+    #chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+      padding-right: 4px; margin-bottom: 14px; }
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .bubble { max-width: 80%; border-radius: 14px; padding: 12px 16px; font-size: 14px; line-height: 1.6; }
+    .bubble.user { background: linear-gradient(135deg, #6C63FF, #8b84ff); align-self: flex-end;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.3); }
+    .bubble.assistant { background: var(--surface); border: 1px solid var(--border); align-self: flex-start; }
+
+    /* LOCK */
+    .lock-screen { text-align: center; padding: 70px 20px; }
+    .lock-icon { font-size: 44px; margin-bottom: 20px; }
+    .lock-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; margin-bottom: 10px; }
+    .lock-sub { color: var(--muted); font-size: 15px; max-width: 380px; margin: 0 auto 28px; line-height: 1.6; }
+    .lock-hint { color: var(--accent); font-size: 14px; font-weight: 500; }
+
+    /* BILLING */
+    .plan-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+    .plan-card { flex: 1 1 210px; padding: 28px; position: relative; transition: transform 0.2s; }
+    .plan-card:hover { transform: translateY(-3px); }
+    .plan-card.highlight { border-color: rgba(108,99,255,0.5);
+      box-shadow: 0 0 40px rgba(108,99,255,0.15); }
+    .plan-top-badge { position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff; font-size: 10px; font-weight: 700;
+      padding: 3px 14px; border-radius: 0 0 10px 10px; letter-spacing: 0.08em; }
+    .plan-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 6px; }
+    .plan-price-row { margin-bottom: 4px; }
+    .plan-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; }
+    .plan-period { color: var(--muted); font-size: 14px; }
+    .plan-leads { color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; margin-bottom: 20px; margin-top: 6px; }
+    .plan-feature { font-size: 13px; display: flex; gap: 10px; margin-bottom: 9px; align-items: flex-start; }
+    .plan-feature.off { color: var(--muted); }
+    .feat-icon { flex-shrink: 0; margin-top: 1px; }
+    .billing-note { margin-top: 24px; padding: 16px 20px; color: var(--muted); font-size: 13px; }
+
+    /* Outreach log */
+    .outreach-empty { text-align:center; padding: 60px 0; color: var(--muted); }
+    .outreach-row { display: grid; grid-template-columns: 1fr 2fr 1fr auto; gap: 12px; align-items: center;
+      padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .outreach-row:last-child { border-bottom: none; }
+    .outreach-row:hover { background: var(--surface-hover); }
+    .outreach-header { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted);
+      padding: 10px 18px; border-bottom: 1px solid var(--border); display:grid;
+      grid-template-columns: 1fr 2fr 1fr auto; gap:12px; }
+    .or-to { font-weight: 600; }
+    .or-subject { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .or-ts { color: var(--muted); font-size: 11px; }
+    .or-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: rgba(34,197,94,0.15);
+      color: var(--success); font-weight: 700; letter-spacing: 0.05em; white-space:nowrap; }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 56px 20px; color: var(--muted); }
+    .empty-icon { font-size: 44px; margin-bottom: 16px; opacity: 0.6; }
+    .empty-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: var(--text); margin-bottom: 8px; }
+
+    /* BOOT */
+    #boot-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 14px; letter-spacing: 0.1em; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   </style>
 </head>
 <body>
+
+<!-- Loader -->
 <div id="loader">
-  <div class="brand">NIMBUS</div>
-  <div class="bar-track"><div class="bar-fill"></div></div>
-  <div class="sub">AI Sales Platform</div>
+  <div class="l-brand">NIMBUS</div>
+  <div class="l-track"><div class="l-fill"></div></div>
+  <div class="l-sub">AI Sales Platform</div>
 </div>
-<div class="scroll-bar" id="scrollBar"></div>
+
+<!-- 3D Background -->
+<canvas id="bg-canvas"></canvas>
 <div class="vignette"></div>
-<div class="scanlines"></div>
-<canvas id="c"></canvas>
-<nav id="nav">
-  <a href="#" class="nav-brand">Nimbus</a>
-  <div class="nav-links">
-    <a href="#features">Product</a>
-    <a href="#how">How it works</a>
-    <a href="#pricing">Pricing</a>
+
+<div id="root-ui">
+  <div id="boot-screen">LOADING…</div>
+
+  <!-- AUTH -->
+  <div id="auth-screen" class="hidden">
+    <div class="auth-box glass">
+      <div class="auth-logo">Nimbus</div>
+      <div class="auth-sub" id="auth-subtitle">Sign in to your account</div>
+      <div class="field hidden" id="name-field">
+        <label>Full name</label>
+        <input type="text" id="auth-name" placeholder="Your name" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="you@example.com" />
+      </div>
+      <div class="field" style="margin-bottom:24px;">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="••••••••" />
+      </div>
+      <div id="auth-error" class="msg-error hidden"></div>
+      <div id="auth-success" class="msg-success hidden"></div>
+      <button class="btn" style="width:100%;padding:13px;" id="auth-submit">Sign in</button>
+      <div class="auth-toggle-row">
+        <span id="auth-toggle-text">No account? </span>
+        <a href="#" id="auth-toggle">Sign up</a>
+      </div>
+    </div>
   </div>
-  <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="nav-cta">Get started</a>
-</nav>
-<div class="scroll-container" id="scroll-container">
-  <section class="section" id="s0">
-    <div class="content left" id="c0">
-      <div class="eyebrow"><span class="eyebrow-dot"></span>AI Sales Platform</div>
-      <h1>Turn every lead into <span class="accent">closed revenue.</span></h1>
-      <p class="body-text">Capture, qualify, and follow up with leads in any language — in seconds. Nimbus replaces your entire outbound workflow with AI that never sleeps.</p>
-      <div class="cta-row">
-        <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="btn-primary">Start for free <span>→</span></a>
-        <a href="#features" class="btn-ghost">See how it works <span class="arrow">→</span></a>
-      </div>
-      <div class="trust-row">
-        <span class="trust-item">SOC 2 ready</span><span class="trust-divider"></span>
-        <span class="trust-item">30+ languages</span><span class="trust-divider"></span>
-        <span class="trust-item">No card required</span>
-      </div>
-      <div class="stats-row">
-        <div class="stat-item"><div class="stat-num">3.2×</div><div class="stat-label">More qualified leads</div></div>
-        <div class="stat-item"><div class="stat-num">43s</div><div class="stat-label">Avg. first response</div></div>
-        <div class="stat-item"><div class="stat-num">42%</div><div class="stat-label">Reply rate lift</div></div>
-      </div>
-    </div>
-  </section>
-  <section class="section" id="s1">
-    <div class="content left glass" id="c1" style="max-width:620px">
-      <div class="eyebrow"><span class="eyebrow-dot"></span>Product</div>
-      <h2>Everything your sales team needs.</h2>
-      <p class="body-text">Three AI-powered modules that work together to move leads from first touch to closed deal.</p>
-      <div class="feature-list">
-        <div class="feature-item"><div class="feature-num">01</div><div class="feature-body"><h3>Lead Pipeline</h3><p>Every lead scored, enriched, and ranked automatically. Know exactly who to call first.</p></div></div>
-        <div class="feature-item"><div class="feature-num">02</div><div class="feature-body"><h3>Follow-up AI</h3><p>Personalized outreach emails written in seconds. Reference the lead's company, role, and channel — automatically.</p></div></div>
-        <div class="feature-item"><div class="feature-num">03</div><div class="feature-body"><h3>Qualify AI</h3><p>Chat-based qualification that asks the right BANT questions and scores prospects before your reps get involved.</p></div></div>
-      </div>
-    </div>
-  </section>
-  <section class="section" id="s2">
-    <div class="content right glass" id="c2" style="max-width:560px">
-      <div class="eyebrow"><span class="eyebrow-dot"></span>How it works</div>
-      <h2>Set up in under 10 minutes.</h2>
-      <p class="body-text">No engineers needed. Paste your first lead and Nimbus handles everything from there.</p>
-      <div class="feature-list">
-        <div class="feature-item"><div class="feature-num">01</div><div class="feature-body"><h3>Connect your lead sources</h3><p>Import from CSV, web form, LinkedIn, or any channel. Leads flow in automatically.</p></div></div>
-        <div class="feature-item"><div class="feature-num">02</div><div class="feature-body"><h3>AI enriches and scores</h3><p>Every lead gets a score, a status, and a recommended next action — instantly.</p></div></div>
-        <div class="feature-item"><div class="feature-num">03</div><div class="feature-body"><h3>Follow up and close</h3><p>One click to generate a personalized email. Send it, track replies, and move the deal forward.</p></div></div>
-      </div>
-    </div>
-  </section>
-  <section class="section" id="s3">
-    <div class="content center glass" id="c3" style="max-width:860px;width:100%">
-      <div class="eyebrow" style="justify-content:center"><span class="eyebrow-dot"></span>Pricing</div>
-      <h2>Simple, honest pricing.</h2>
-      <p class="body-text">Start free. Upgrade when you're ready to scale.</p>
-      <div class="pricing-grid">
-        <div class="plan-card">
-          <div class="plan-name">Starter</div>
-          <div class="plan-price">$50 <span>/month</span></div>
-          <ul class="plan-features"><li>Up to 100 leads/mo</li><li>Pipeline view</li><li>AI scoring</li><li>1 seat</li></ul>
-          <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="plan-btn">Get started</a>
-        </div>
-        <div class="plan-card featured">
-          <div class="plan-badge">Most popular</div>
-          <div class="plan-name">Growth</div>
-          <div class="plan-price">$300 <span>/month</span></div>
-          <ul class="plan-features"><li>10,000 leads/mo</li><li>Follow-up AI</li><li>Qualify AI</li><li>30+ languages</li><li>5 seats</li></ul>
-          <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="plan-btn">Upgrade to Growth</a>
-        </div>
-        <div class="plan-card">
-          <div class="plan-name">Enterprise</div>
-          <div class="plan-price">Custom <span>/annual</span></div>
-          <ul class="plan-features"><li>Unlimited leads</li><li>Custom AI training</li><li>SOC 2 + SSO</li><li>Dedicated support</li></ul>
-          <a href="mailto:hello@usenimbus.ai" class="plan-btn">Contact sales</a>
+
+  <!-- APP -->
+  <div id="app-screen" class="hidden">
+    <div id="nav">
+      <div style="display:flex;align-items:stretch;height:60px;">
+        <div class="nav-logo" style="display:flex;align-items:center;margin-right:8px;">Nimbus</div>
+        <div class="nav-tabs">
+          <button class="nav-tab active" data-tab="pipeline">Pipeline</button>
+          <button class="nav-tab" data-tab="followup">Follow-up AI</button>
+          <button class="nav-tab" data-tab="qualify">Qualify AI</button>
+          <button class="nav-tab" data-tab="outreach">Outreach</button>
+          <button class="nav-tab" data-tab="capture">Lead Capture</button>
+          <button class="nav-tab" data-tab="billing">Billing</button>
         </div>
       </div>
+      <div class="nav-right">
+        <span class="nav-email" id="nav-email"></span>
+        <span class="plan-pill" id="nav-plan">STARTER</span>
+        <button class="btn btn-ghost btn-sm" id="signout-btn">Sign out</button>
+      </div>
     </div>
-  </section>
-  <section class="section" id="s4">
-    <div class="content center" id="c4">
-      <div class="eyebrow" style="justify-content:center"><span class="eyebrow-dot"></span>Get started today</div>
-      <h1 style="font-size:clamp(2.4rem,5vw,4.5rem)">Your next deal is waiting.</h1>
-      <p class="body-text" style="max-width:440px;margin:0 auto 36px">Join teams across 40+ countries using Nimbus to turn leads into revenue — faster than ever.</p>
-      <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="btn-primary" style="font-size:17px;padding:16px 40px">Start for free →</a>
+
+    <div id="content">
+      <!-- PIPELINE -->
+      <div class="tab-panel active" id="tab-pipeline">
+        <div id="cap-bar" class="glass-sm">
+          <div class="cap-row">
+            <span style="color:var(--muted);">Monthly leads</span>
+            <span id="cap-label" style="font-weight:600;">0 / 100</span>
+          </div>
+          <div id="cap-track"><div id="cap-fill" style="width:0%"></div></div>
+          <div id="cap-msg"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <div>
+            <div class="section-title">Pipeline</div>
+            <div class="section-sub" id="lead-count" style="margin-bottom:0;">0 leads total</div>
+          </div>
+          <button class="btn" id="add-lead-btn">+ Add lead</button>
+        </div>
+        <div id="leads-list"></div>
+      </div>
+
+      <!-- FOLLOW-UP AI -->
+      <div class="tab-panel" id="tab-followup">
+        <div id="fu-locked" class="lock-screen hidden">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-title">Growth plan required</div>
+          <div class="lock-sub">AI-powered follow-up emails are available on the Growth plan. Upgrade to generate personalised outreach in seconds.</div>
+          <div class="lock-hint">Go to Billing to upgrade →</div>
+        </div>
+        <div id="fu-content">
+          <div class="section-title">Follow-up AI</div>
+          <div class="section-sub">Pick a lead — get a personalised outreach email instantly.</div>
+          <div class="fu-layout">
+            <div class="fu-sidebar" id="fu-lead-list"></div>
+            <div class="fu-main" id="fu-main-area">
+              <div class="empty" id="fu-no-leads">
+                <div class="empty-icon">📋</div>
+                <div class="empty-title">No leads yet</div>
+                <div>Add leads in Pipeline first.</div>
+              </div>
+              <div id="fu-selected-card" class="glass-sm hidden" style="padding:16px;margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <div style="font-weight:700;font-size:16px;" id="fu-sel-name"></div>
+                    <div style="color:var(--muted);font-size:13px;margin-top:3px;" id="fu-sel-meta"></div>
+                  </div>
+                  <span style="color:var(--accent);font-weight:700;font-family:'Syne',sans-serif;font-size:18px;" id="fu-sel-score"></span>
+                </div>
+              </div>
+              <button class="btn hidden" style="width:100%;" id="fu-generate-btn">✨ Write follow-up email</button>
+              <div id="fu-output" class="hidden">
+                <div class="output-box glass-sm" id="fu-output-text"></div>
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                  <button class="btn btn-ghost btn-sm" id="fu-copy-btn">Copy</button>
+                  <button class="btn btn-ghost btn-sm" id="fu-regen-btn">Regenerate</button>
+                  <button class="btn btn-sm" id="fu-send-btn" style="background:var(--success);">&#128231; Send email</button>
+                  <span id="fu-send-status" style="font-size:12px;color:var(--muted);margin-left:4px;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUALIFY AI -->
+      <div class="tab-panel" id="tab-qualify">
+        <div id="qa-locked" class="lock-screen hidden">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-title">Growth plan required</div>
+          <div class="lock-sub">The BANT qualification chatbot is available on the Growth plan. Upgrade to score leads in seconds.</div>
+          <div class="lock-hint">Go to Billing to upgrade →</div>
+        </div>
+        <div id="qa-content" style="display:flex;flex-direction:column;height:calc(100vh - 200px);max-height:580px;">
+          <div class="section-title">Qualify AI</div>
+          <div class="section-sub">Describe a lead — get a BANT score and recommendation.</div>
+          <div id="chat-messages">
+            <div class="bubble assistant">Hi! I'm Nimbus Qualify. Tell me about a lead and I'll help you score them using BANT — budget, authority, need, and timeline.</div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <input id="chat-input" placeholder="Describe your lead…"
+              style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:14px;transition:border-color 0.2s;" />
+            <button class="btn" id="chat-send" style="padding:12px 20px;">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BILLING -->
+      <div class="tab-panel" id="tab-billing">
+        <div class="section-title">Billing</div>
+        <div class="section-sub" id="billing-sub">Current plan: Starter</div>
+        <div class="plan-grid">
+          <div class="plan-card glass">
+            <div class="plan-name">Starter</div>
+            <div class="plan-price-row"><span class="plan-price">$50</span><span class="plan-period">/mo</span></div>
+            <div class="plan-leads">100 leads / month</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Pipeline management</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Lead scoring</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Basic analytics</div>
+            <div class="plan-feature off"><span class="feat-icon">🔒</span>Follow-up AI</div>
+            <div class="plan-feature off"><span class="feat-icon">🔒</span>Qualify AI</div>
+            <button class="btn btn-ghost" style="width:100%;margin-top:20px;" disabled id="starter-btn">Current plan</button>
+          </div>
+          <div class="plan-card glass highlight">
+            <div class="plan-top-badge">MOST POPULAR</div>
+            <div class="plan-name">Growth</div>
+            <div class="plan-price-row"><span class="plan-price">$300</span><span class="plan-period">/mo</span></div>
+            <div class="plan-leads">10,000 leads / month</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Everything in Starter</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Follow-up AI</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Qualify AI</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Priority support</div>
+            <button class="btn" style="width:100%;margin-top:20px;" id="growth-btn">Upgrade to Growth</button>
+          </div>
+          <div class="plan-card glass">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-price-row"><span class="plan-price" style="font-size:24px;">Custom</span></div>
+            <div class="plan-leads">Unlimited leads</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Everything in Growth</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Dedicated onboarding</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>Custom integrations</div>
+            <div class="plan-feature"><span class="feat-icon" style="color:var(--success);">✓</span>SLA + account manager</div>
+            <button class="btn btn-ghost" style="width:100%;margin-top:20px;" id="enterprise-btn">Contact us</button>
+          </div>
+        </div>
+        <div class="billing-note glass-sm">Payments processed securely by Paddle. Cancel anytime. Lead caps reset on the 1st of each month.</div>
+      </div>
+
+      <!-- OUTREACH TAB -->
+      <div class="tab-panel" id="tab-outreach">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div>
+            <div class="section-title">Outreach History</div>
+            <div class="section-sub" id="outreach-sub">Emails sent via Follow-up AI</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="outreach-refresh-btn">↻ Refresh</button>
+        </div>
+        <div id="outreach-list"></div>
+      </div>
+
+      <!-- LEAD CAPTURE TAB -->
+      <div class="tab-panel" id="tab-capture">
+        <div class="section-title">Lead Capture Form</div>
+        <div class="section-sub">Share a public form that sends leads directly into your pipeline.</div>
+        <div style="margin-top:24px;display:flex;flex-direction:column;gap:16px;max-width:560px;">
+          <div class="glass-sm" style="padding:20px;">
+            <div style="font-size:12px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">Your capture form URL</div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <input id="capture-url-input" readonly style="flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;" />
+              <button class="btn btn-sm" id="capture-copy-btn">Copy</button>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--muted);">Leads submitted via this form appear instantly in your Pipeline.</div>
+          </div>
+          <div class="glass-sm" style="padding:20px;">
+            <div style="font-size:12px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">Embed snippet</div>
+            <textarea id="capture-embed-input" readonly rows="4" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:12px;font-family:monospace;resize:none;"></textarea>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px;" id="capture-embed-copy-btn">Copy embed code</button>
+          </div>
+          <a id="capture-preview-link" href="#" target="_blank" class="btn btn-ghost" style="text-align:center;">Preview form ↗</a>
+        </div>
+      </div>
+
     </div>
-  </section>
+  </div>
 </div>
-<footer>
-  <div class="brand">Nimbus</div>
-  <div class="links">
-    <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-legal/terms.html">Terms</a>
-    <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-legal/privacy.html">Privacy</a>
-    <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-legal/refunds.html">Refunds</a>
-    <a href="mailto:hello@usenimbus.ai">Contact</a>
+
+<!-- ADD LEAD MODAL -->
+<div id="modal-overlay">
+  <div id="modal-box" class="glass">
+    <div class="modal-header">
+      <span class="modal-title">Add lead</span>
+      <button class="modal-close" id="modal-close">×</button>
+    </div>
+    <div id="modal-cap-block" class="hidden" style="text-align:center;padding:28px 0;">
+      <div style="font-size:40px;margin-bottom:16px;">🚫</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:10px;">Monthly cap reached</div>
+      <div style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:24px;">You've used all your leads this month.<br/>Upgrade to Growth for 10,000 leads/month.</div>
+      <button class="btn" id="modal-upgrade-btn">See upgrade options</button>
+    </div>
+    <div id="modal-form">
+      <div class="field"><label>Full name *</label><input type="text" id="lead-name" /></div>
+      <div class="field"><label>Email</label><input type="email" id="lead-email" /></div>
+      <div class="field"><label>Company</label><input type="text" id="lead-company" /></div>
+      <div class="field"><label>Country</label><input type="text" id="lead-country" /></div>
+      <div class="field">
+        <label>Channel</label>
+        <select id="lead-channel">
+          <option>Web form</option><option>LinkedIn</option><option>WhatsApp</option>
+          <option>Email</option><option>Ad click</option><option>Referral</option><option>Manual</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:24px;"><label>Notes</label><textarea id="lead-notes" rows="3"></textarea></div>
+      <div id="lead-error" class="msg-error hidden"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+        <button class="btn" id="modal-save">Add lead</button>
+      </div>
+    </div>
   </div>
-  <div class="copy">© 2026 Nimbus. All rights reserved.</div>
-</footer>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</div>
+
 <script>
-gsap.registerPlugin(ScrollTrigger);
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x04050f, 0.018);
-scene.background = new THREE.Color(0x04050f);
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 100);
-camera.position.set(0, 0, 5);
-const tunnelPath = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(-1.5,1,-8),new THREE.Vector3(1,-0.5,-16),new THREE.Vector3(-0.5,1.5,-24),new THREE.Vector3(0.5,-1,-32),new THREE.Vector3(0,0.5,-40)],false,'catmullrom',0.5);
-const tubeGeo = new THREE.TubeGeometry(tunnelPath,300,1.4,12,false);
-scene.add(new THREE.Mesh(tubeGeo,new THREE.MeshBasicMaterial({color:0x6C63FF,side:THREE.BackSide,wireframe:true,transparent:true,opacity:0.04})));
-const particleCount=2000,pGeo=new THREE.BufferGeometry(),pPos=new Float32Array(particleCount*3);
-for(let i=0;i<particleCount;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t);pPos[i*3]=pt.x+(Math.random()-0.5)*4;pPos[i*3+1]=pt.y+(Math.random()-0.5)*4;pPos[i*3+2]=pt.z+(Math.random()-0.5)*3;}
-pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
-const particles=new THREE.Points(pGeo,new THREE.PointsMaterial({color:0x8b85ff,size:0.025,transparent:true,opacity:0.6,sizeAttenuation:true,blending:THREE.AdditiveBlending,depthWrite:false}));
-scene.add(particles);
-const p2Count=800,p2Geo=new THREE.BufferGeometry(),p2Pos=new Float32Array(p2Count*3);
-for(let i=0;i<p2Count;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t);p2Pos[i*3]=pt.x+(Math.random()-0.5)*5;p2Pos[i*3+1]=pt.y+(Math.random()-0.5)*5;p2Pos[i*3+2]=pt.z+(Math.random()-0.5)*4;}
-p2Geo.setAttribute('position',new THREE.BufferAttribute(p2Pos,3));
-scene.add(new THREE.Points(p2Geo,new THREE.PointsMaterial({color:0xe879f9,size:0.018,transparent:true,opacity:0.3,sizeAttenuation:true,blending:THREE.AdditiveBlending,depthWrite:false})));
-const shapeGroup=new THREE.Group(),shapeGeos=[new THREE.OctahedronGeometry(0.08,0),new THREE.TetrahedronGeometry(0.06,0),new THREE.IcosahedronGeometry(0.05,0)];
-for(let i=0;i<40;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t),geo=shapeGeos[Math.floor(Math.random()*shapeGeos.length)],mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0x6C63FF:0xe879f9,transparent:true,opacity:0.1+Math.random()*0.15,wireframe:true,blending:THREE.AdditiveBlending}),mesh=new THREE.Mesh(geo,mat);mesh.position.set(pt.x+(Math.random()-0.5)*5,pt.y+(Math.random()-0.5)*5,pt.z+(Math.random()-0.5)*3);mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);mesh.userData.rot={x:(Math.random()-0.5)*0.015,y:(Math.random()-0.5)*0.015};shapeGroup.add(mesh);}
-scene.add(shapeGroup);
-const cam={progress:0};
-gsap.timeline({scrollTrigger:{trigger:'#scroll-container',start:'top top',end:'bottom bottom',scrub:1.5}}).to(cam,{progress:1,duration:1,ease:'none'});
-const mouse={x:0,y:0};
-document.addEventListener('mousemove',e=>{mouse.x=(e.clientX/innerWidth-0.5)*2;mouse.y=(e.clientY/innerHeight-0.5)*2;});
-['#c0','#c1','#c2','#c3','#c4'].forEach((sel,i)=>{const el=document.querySelector(sel);if(!el)return;gsap.fromTo(el,{opacity:0,y:60},{opacity:1,y:0,scrollTrigger:{trigger:'#s'+i,start:'top 70%',end:'top 30%',scrub:1}});});
-window.addEventListener('scroll',()=>{const pct=scrollY/(document.body.scrollHeight-innerHeight)*100;document.getElementById('scrollBar').style.width=pct+'%';document.getElementById('nav').classList.toggle('scrolled',scrollY>60);});
-const fogColors=[new THREE.Color(0x04050f),new THREE.Color(0x08062a),new THREE.Color(0x0d0730),new THREE.Color(0x080622),new THREE.Color(0x04050f)];
-const bgColors=[new THREE.Color(0x04050f),new THREE.Color(0x060720),new THREE.Color(0x0a0928),new THREE.Color(0x06071a),new THREE.Color(0x04050f)];
-function lerpColors(arr,t){const ct=Math.max(0,Math.min(1,t)),idx=ct*(arr.length-1),lo=Math.floor(idx),hi=Math.min(lo+1,arr.length-1);return new THREE.Color().copy(arr[lo]).lerp(arr[hi],idx-lo);}
-const clock=new THREE.Clock();
-function animate(){requestAnimationFrame(animate);const elapsed=clock.getElapsedTime(),progress=cam.progress,t=Math.min(progress*0.85+0.02,0.97),pos=tunnelPath.getPointAt(t),look=tunnelPath.getPointAt(Math.min(t+0.015,0.999));camera.position.set(pos.x+mouse.x*0.2,pos.y-mouse.y*0.1,pos.z);camera.lookAt(look.x,look.y,look.z);scene.fog.color.copy(lerpColors(fogColors,progress));scene.background.copy(lerpColors(bgColors,progress));scene.fog.density=0.016+Math.sin(progress*Math.PI)*0.01;const arr=pGeo.attributes.position.array;for(let i=0;i<particleCount;i++){arr[i*3]+=Math.sin(elapsed*0.3+i*0.2)*0.0008;arr[i*3+1]+=Math.cos(elapsed*0.4+i*0.15)*0.0008;}pGeo.attributes.position.needsUpdate=true;shapeGroup.children.forEach(m=>{m.rotation.x+=m.userData.rot.x;m.rotation.y+=m.userData.rot.y;});renderer.render(scene,camera);}
-animate();
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-function hideLoader(){document.getElementById('loader').classList.add('hidden');}
-setTimeout(hideLoader,2500);
-document.addEventListener('DOMContentLoaded',function(){setTimeout(hideLoader,1800);});
-window.addEventListener('load',function(){hideLoader();});
+// ── CONFIG ────────────────────────────────────────────────────
+const SUPABASE_URL      = "https://rnsdgomztwckhiwufoxp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuc2Rnb216dHdja2hpd3Vmb3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMDgxODEsImV4cCI6MjA5Nzc4NDE4MX0.bEcyjHK6NZl6tdY2eq7VysjE4bWTjkAPn3ZDc4UtCs0";
+const PADDLE_CLIENT_TOKEN    = "live_4c15608cab3b3f711f6faf70e12";
+const PADDLE_GROWTH_PRICE_ID = "pri_01kvt5mgxr8mjc1a1e9cv8011x";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null, currentProfile = null, fuLeads = [], fuSelected = null, authMode = "signin";
+const chatHistory = [{role:"assistant",content:"Hi! I'm Nimbus Qualify. Tell me about a lead and I'll help you score them using BANT — budget, authority, need, and timeline."}];
+
+// ── THREE.JS BACKGROUND ───────────────────────────────────────
+(function initThree() {
+  const canvas = document.getElementById("bg-canvas");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 100);
+  camera.position.z = 3;
+
+  // Star field
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 1800;
+  const starPos = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 40;
+  starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.04, transparent: true, opacity: 0.6, sizeAttenuation: true });
+  scene.add(new THREE.Points(starGeo, starMat));
+
+  // Purple accent particles
+  const accGeo = new THREE.BufferGeometry();
+  const accCount = 400;
+  const accPos = new Float32Array(accCount * 3);
+  for (let i = 0; i < accCount * 3; i++) accPos[i] = (Math.random() - 0.5) * 20;
+  accGeo.setAttribute("position", new THREE.BufferAttribute(accPos, 3));
+  const accMat = new THREE.PointsMaterial({ color: 0x6C63FF, size: 0.08, transparent: true, opacity: 0.5,
+    sizeAttenuation: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  const accPts = new THREE.Points(accGeo, accMat);
+  scene.add(accPts);
+
+  // Floating wireframe orbs
+  const orbGroup = new THREE.Group();
+  [1.4, 0.9, 0.6].forEach((r, i) => {
+    const geo = new THREE.IcosahedronGeometry(r, 1);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x6C63FF, wireframe: true, transparent: true, opacity: 0.04 + i * 0.015 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set((i - 1) * 3.5, (i % 2 === 0 ? 1 : -1) * 1.2, -2 - i);
+    mesh.userData.speed = { x: 0.0002 + i * 0.0001, y: 0.0003 + i * 0.0001 };
+    orbGroup.add(mesh);
+  });
+  scene.add(orbGroup);
+
+  // Mouse parallax
+  const mouse = { x: 0, y: 0 };
+  document.addEventListener("mousemove", e => {
+    mouse.x = (e.clientX / innerWidth - 0.5) * 0.3;
+    mouse.y = (e.clientY / innerHeight - 0.5) * 0.2;
+  });
+
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.0005;
+    accPts.rotation.y += 0.0003;
+    accPts.rotation.x += 0.0001;
+    orbGroup.children.forEach(m => {
+      m.rotation.x += m.userData.speed.x;
+      m.rotation.y += m.userData.speed.y;
+    });
+    camera.position.x += (mouse.x - camera.position.x) * 0.03;
+    camera.position.y += (-mouse.y - camera.position.y) * 0.03;
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener("resize", () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+})();
+
+// ── HELPERS ───────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove("hidden");
+const hide = id => $(id).classList.add("hidden");
+const setText = (id, t) => $(id).textContent = t;
+
+function showScreen(name) {
+  ["boot","auth","app"].forEach(s => {
+    const el = $(s + "-screen");
+    if (el) el.classList.add("hidden");
+  });
+  const target = $(name + "-screen");
+  if (target) target.classList.remove("hidden");
+}
+
+// ── PROFILE ───────────────────────────────────────────────────
+async function fetchProfile(uid) {
+  const { data } = await sb.from("profiles").select("*").eq("id", uid).single();
+  currentProfile = data;
+  updateCapBar(); updateNav(); updateBillingUI(); updateAIGates();
+}
+
+function updateNav() {
+  const plan = currentProfile?.plan || "starter";
+  $("nav-plan").textContent = plan.toUpperCase();
+  $("nav-email").textContent = currentUser?.email || "";
+}
+
+function updateCapBar() {
+  const p = currentProfile, used = p?.monthly_leads_used || 0, cap = p?.lead_cap || 100;
+  const pct = Math.min(100, (used / cap) * 100);
+  const atLimit = used >= cap, nearLimit = pct >= 80 && !atLimit;
+  setText("cap-label", `${used} / ${cap}`);
+  $("cap-label").style.color = atLimit ? "var(--danger)" : nearLimit ? "var(--warning)" : "var(--text)";
+  $("cap-fill").style.width = pct + "%";
+  $("cap-fill").style.background = atLimit ? "var(--danger)" : nearLimit ? "var(--warning)" : "var(--accent)";
+  $("cap-fill").style.boxShadow = atLimit ? "0 0 8px rgba(239,68,68,0.5)" : nearLimit ? "0 0 8px rgba(245,158,11,0.5)" : "0 0 8px var(--accent-glow)";
+  $("cap-bar").style.borderColor = atLimit ? "rgba(239,68,68,0.4)" : nearLimit ? "rgba(245,158,11,0.4)" : "var(--border)";
+  const msg = $("cap-msg");
+  if (atLimit) { msg.textContent = "⚠ Lead cap reached — upgrade to Growth for 10,000 leads/month."; msg.style.color = "var(--danger)"; }
+  else if (nearLimit) { msg.textContent = "Almost at your limit — consider upgrading soon."; msg.style.color = "var(--warning)"; }
+  else msg.textContent = "";
+  $("add-lead-btn").style.opacity = atLimit ? "0.4" : "1";
+}
+
+function updateAIGates() {
+  const g = currentProfile?.plan === "growth" || currentProfile?.plan === "enterprise";
+  g ? (hide("fu-locked"), show("fu-content")) : (show("fu-locked"), hide("fu-content"));
+  g ? (hide("qa-locked"), show("qa-content")) : (show("qa-locked"), hide("qa-content"));
+}
+
+function updateBillingUI() {
+  const p = currentProfile, plan = p?.plan || "starter";
+  $("billing-sub").textContent = `Current plan: ${plan.charAt(0).toUpperCase()+plan.slice(1)} · ${p?.monthly_leads_used||0} of ${p?.lead_cap||100} leads used this month`;
+  if (plan === "growth" || plan === "enterprise") {
+    $("growth-btn").textContent = "Current plan"; $("growth-btn").disabled = true;
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+document.querySelectorAll(".nav-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    $("tab-" + btn.dataset.tab).classList.add("active");
+    if (btn.dataset.tab === "followup") loadFULeads();
+    if (btn.dataset.tab === "outreach") loadOutreach();
+    if (btn.dataset.tab === "capture") setupCaptureTab();
+  });
+});
+
+// ── PIPELINE ──────────────────────────────────────────────────
+async function loadLeads() {
+  const { data } = await sb.from("leads").select("*").order("created_at", { ascending: false });
+  const leads = data || [];
+  setText("lead-count", `${leads.length} lead${leads.length !== 1 ? "s" : ""} total`);
+  const list = $("leads-list");
+  if (!leads.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No leads yet</div><div>Add your first lead to get started.</div></div>`;
+    return;
+  }
+  list.innerHTML = leads.map(l => {
+    const sc = l.score >= 70 ? "#22C55E" : l.score >= 40 ? "#F59E0B" : "#EF4444";
+    const stBg = l.status === "hot" ? "rgba(239,68,68,0.12)" : l.status === "warm" ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.06)";
+    const stC  = l.status === "hot" ? "#EF4444" : l.status === "warm" ? "#F59E0B" : "rgba(232,232,240,0.5)";
+    return `<div class="lead-row glass-sm">
+      <div class="lead-avatar">${(l.name||"?").charAt(0).toUpperCase()}</div>
+      <div class="lead-info"><div class="lead-name">${l.name}</div><div class="lead-sub">${l.company||l.email||"—"}</div></div>
+      <div class="lead-meta">
+        <span class="status-pill" style="background:${stBg};color:${stC};">${(l.status||"cold").toUpperCase()}</span>
+        <span class="score-num" style="color:${sc};">${l.score}</span>
+        <span class="meta-tag">${l.channel||"—"}</span>
+        <span class="meta-tag">${l.country||""}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+$("add-lead-btn").addEventListener("click", () => {
+  const atCap = (currentProfile?.monthly_leads_used||0) >= (currentProfile?.lead_cap||100);
+  atCap ? (show("modal-cap-block"), hide("modal-form")) : (hide("modal-cap-block"), show("modal-form"));
+  hide("lead-error");
+  ["lead-name","lead-email","lead-company","lead-country","lead-notes"].forEach(id => $(id).value = "");
+  $("modal-overlay").classList.add("open");
+});
+const closeModal = () => $("modal-overlay").classList.remove("open");
+$("modal-close").addEventListener("click", closeModal);
+$("modal-cancel").addEventListener("click", closeModal);
+$("modal-upgrade-btn").addEventListener("click", () => { closeModal(); document.querySelector('[data-tab="billing"]').click(); });
+$("modal-save").addEventListener("click", async () => {
+  const name = $("lead-name").value.trim();
+  if (!name) { show("lead-error"); setText("lead-error", "Name is required"); return; }
+  $("modal-save").textContent = "Saving…"; $("modal-save").disabled = true;
+  const { error } = await sb.from("leads").insert({
+    name, email: $("lead-email").value, company: $("lead-company").value,
+    country: $("lead-country").value, channel: $("lead-channel").value,
+    notes: $("lead-notes").value, user_id: currentUser.id,
+    score: Math.floor(Math.random()*40)+40, status: "cold",
+  });
+  $("modal-save").textContent = "Add lead"; $("modal-save").disabled = false;
+  if (error) { show("lead-error"); setText("lead-error", error.message); return; }
+  closeModal(); await loadLeads(); await fetchProfile(currentUser.id);
+});
+
+// ── FOLLOW-UP AI ──────────────────────────────────────────────
+async function loadFULeads() {
+  const { data } = await sb.from("leads").select("id,name,company,country,channel,score,notes").order("created_at",{ascending:false}).limit(30);
+  fuLeads = data || [];
+  const sidebar = $("fu-lead-list");
+  if (!fuLeads.length) { sidebar.innerHTML = ""; show("fu-no-leads"); hide("fu-generate-btn"); return; }
+  hide("fu-no-leads");
+  sidebar.innerHTML = fuLeads.map((l,i) =>
+    `<div class="fu-item${i===0?" active":""}" data-id="${l.id}">
+      <div style="font-weight:600;font-size:14px;">${l.name}</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:2px;">${l.company||"—"}</div>
+    </div>`
+  ).join("");
+  sidebar.querySelectorAll(".fu-item").forEach(el => {
+    el.addEventListener("click", () => {
+      sidebar.querySelectorAll(".fu-item").forEach(e => e.classList.remove("active"));
+      el.classList.add("active");
+      fuSelected = fuLeads.find(l => l.id === el.dataset.id);
+      updateFUSel();
+    });
+  });
+  fuSelected = fuLeads[0]; updateFUSel();
+}
+
+function updateFUSel() {
+  if (!fuSelected) return;
+  show("fu-selected-card"); show("fu-generate-btn"); hide("fu-output");
+  setText("fu-sel-name", fuSelected.name);
+  setText("fu-sel-meta", [fuSelected.company, fuSelected.country, fuSelected.channel].filter(Boolean).join(" · "));
+  setText("fu-sel-score", `${fuSelected.score}/100`);
+}
+
+async function genFollowUp() {
+  if (!fuSelected) return;
+  $("fu-generate-btn").textContent = "Generating…"; $("fu-generate-btn").disabled = true;
+  hide("fu-output");
+  try {
+    const res = await fetch("https://rnsdgomztwckhiwufoxp.supabase.co/functions/v1/claude-proxy", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:600,
+        messages:[{role:"user",content:`Write a short personalised B2B follow-up email for this lead:\nName: ${fuSelected.name}\nCompany: ${fuSelected.company||"unknown"}\nCountry: ${fuSelected.country||"unknown"}\nChannel: ${fuSelected.channel||"unknown"}\nScore: ${fuSelected.score}/100\nNotes: ${fuSelected.notes||"none"}\n\nTone: professional but warm. Max 120 words. Include subject line.`}]
+      }),
+    });
+    const d = await res.json();
+    $("fu-output-text").textContent = d.content?.[0]?.text || "Error generating.";
+    show("fu-output");
+  } catch(e) { $("fu-output-text").textContent = "Network error — try again."; show("fu-output"); }
+  $("fu-generate-btn").textContent = "✨ Write follow-up email"; $("fu-generate-btn").disabled = false;
+}
+$("fu-generate-btn").addEventListener("click", genFollowUp);
+$("fu-regen-btn").addEventListener("click", genFollowUp);
+$("fu-copy-btn").addEventListener("click", () => navigator.clipboard.writeText($("fu-output-text").textContent));
+
+async function sendFollowUpEmail() {
+  if (!fuSelected || !fuSelected.email) {
+    setText("fu-send-status", "No email address for this lead");
+    return;
+  }
+  const emailText = $("fu-output-text").textContent;
+  if (!emailText) return;
+
+  // Parse subject from generated email
+  const lines = emailText.split("\n");
+  let subject = "Following up";
+  let body = emailText;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].toLowerCase().startsWith("subject:")) {
+      subject = lines[i].replace(/^subject:\s*/i, "").trim();
+      body = lines.slice(i + 1).join("\n").trim();
+      break;
+    }
+  }
+
+  $("fu-send-btn").textContent = "Sending…";
+  $("fu-send-btn").disabled = true;
+  setText("fu-send-status", "");
+
+  try {
+    const res = await fetch("https://rnsdgomztwckhiwufoxp.supabase.co/functions/v1/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: fuSelected.email,
+        subject: subject,
+        body: body,
+        from_name: "Nimbus",
+      }),
+    });
+    const d = await res.json();
+    if (d.success) {
+      $("fu-send-btn").textContent = "✓ Sent!";
+      setText("fu-send-status", "Email delivered to " + fuSelected.email);
+      $("fu-send-btn").style.background = "var(--success)";
+      // Log to email_logs
+      await sb.from("email_logs").insert({
+        user_id: currentUser.id,
+        lead_id: fuSelected.id,
+        to_email: fuSelected.email,
+        to_name: fuSelected.name,
+        subject: subject,
+        body: body,
+        status: "sent"
+      });
+    } else {
+      $("fu-send-btn").textContent = "📧 Send email";
+      setText("fu-send-status", "Failed: " + JSON.stringify(d.error));
+    }
+  } catch(e) {
+    $("fu-send-btn").textContent = "📧 Send email";
+    setText("fu-send-status", "Network error");
+  }
+  $("fu-send-btn").disabled = false;
+}
+$("fu-send-btn").addEventListener("click", sendFollowUpEmail);
+// ── OUTREACH HISTORY ─────────────────────────────────────────
+async function loadOutreach() {
+  const list = $("outreach-list");
+  list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Loading…</div>`;
+  const { data, error } = await sb.from("email_logs")
+    .select("*").order("created_at", { ascending: false }).limit(100);
+  if (error || !data || data.length === 0) {
+    list.innerHTML = `<div class="outreach-empty"><div style="font-size:40px;margin-bottom:14px;">📭</div><div style="font-weight:600;margin-bottom:6px;">No emails sent yet</div><div style="font-size:13px;">Send a follow-up from the Follow-up AI tab and it'll appear here.</div></div>`;
+    setText("outreach-sub", "No emails sent yet");
+    return;
+  }
+  setText("outreach-sub", `${data.length} email${data.length === 1 ? "" : "s"} sent`);
+  const rows = data.map(row => {
+    const ts = new Date(row.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    return `<div class="outreach-row">
+      <div class="or-to">${esc(row.to_name || row.to_email)}<div style="font-size:11px;color:var(--muted);font-weight:400;">${esc(row.to_email)}</div></div>
+      <div class="or-subject">${esc(row.subject || "(no subject)")}</div>
+      <div class="or-ts">${ts}</div>
+      <div class="or-badge">${row.status || "sent"}</div>
+    </div>`;
+  }).join("");
+  list.innerHTML = `<div class="glass" style="overflow:hidden;">
+    <div class="outreach-header"><span>To</span><span>Subject</span><span>Sent</span><span>Status</span></div>
+    ${rows}
+  </div>`;
+}
+function esc(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+$("outreach-refresh-btn").addEventListener("click", loadOutreach);
+
+// ── LEAD CAPTURE FORM TAB ─────────────────────────────────────
+function setupCaptureTab() {
+  if (!currentUser) return;
+  // Point at the sibling capture.html on the same GitHub Pages site
+  const base = window.location.href.replace(/[^/]*$/, "");
+  const captureUrl = `${base}capture.html?uid=${currentUser.id}`;
+  $("capture-url-input").value = captureUrl;
+  $("capture-preview-link").href = captureUrl;
+  const embed = `<iframe src="${captureUrl}" width="100%" height="520" frameborder="0" style="border-radius:12px;"></iframe>`;
+  $("capture-embed-input").value = embed;
+  $("capture-copy-btn").addEventListener("click", () => {
+    navigator.clipboard.writeText(captureUrl);
+    $("capture-copy-btn").textContent = "Copied!";
+    setTimeout(() => $("capture-copy-btn").textContent = "Copy", 2000);
+  });
+  $("capture-embed-copy-btn").addEventListener("click", () => {
+    navigator.clipboard.writeText(embed);
+    $("capture-embed-copy-btn").textContent = "Copied!";
+    setTimeout(() => $("capture-embed-copy-btn").textContent = "Copy embed code", 2000);
+  });
+}
+
+
+// ── QUALIFY AI ────────────────────────────────────────────────
+function addBubble(role, text) {
+  const d = document.createElement("div");
+  d.className = `bubble ${role}`; d.textContent = text;
+  $("chat-messages").appendChild(d);
+  d.scrollIntoView({ behavior:"smooth" });
+}
+async function sendChat() {
+  const txt = $("chat-input").value.trim(); if (!txt) return;
+  $("chat-input").value = ""; $("chat-send").disabled = true;
+  addBubble("user", txt); chatHistory.push({role:"user",content:txt});
+  const thinking = document.createElement("div");
+  thinking.className = "bubble assistant"; thinking.textContent = "Thinking…";
+  $("chat-messages").appendChild(thinking);
+  try {
+    const res = await fetch("https://rnsdgomztwckhiwufoxp.supabase.co/functions/v1/claude-proxy", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:400,
+        system:"You are Nimbus Qualify, a B2B sales qualification assistant. Help qualify leads using BANT (Budget, Authority, Need, Timeline). Ask focused questions one at a time, then give a score out of 10 with a short recommendation. Be concise.",
+        messages: chatHistory
+      }),
+    });
+    const d = await res.json();
+    const reply = d.content?.[0]?.text || "Something went wrong.";
+    thinking.textContent = reply; chatHistory.push({role:"assistant",content:reply});
+  } catch(e) { thinking.textContent = "Network error — try again."; }
+  $("chat-send").disabled = false; $("chat-input").focus();
+}
+$("chat-send").addEventListener("click", sendChat);
+$("chat-input").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
+$("chat-input").addEventListener("focus", e => { e.target.style.borderColor = "rgba(108,99,255,0.5)"; });
+$("chat-input").addEventListener("blur", e => { e.target.style.borderColor = "var(--border)"; });
+
+// ── PADDLE ────────────────────────────────────────────────────
+function launchPaddle() {
+  $("growth-btn").textContent = "Loading…"; $("growth-btn").disabled = true;
+  const open = () => {
+    window.Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN });
+    window.Paddle.Checkout.open({
+      items:[{priceId:PADDLE_GROWTH_PRICE_ID,quantity:1}],
+      customData:{supabase_user_id:currentUser.id},
+      customer:{email:currentUser.email},
+      successUrl:window.location.href,
+    });
+    $("growth-btn").textContent = "Upgrade to Growth"; $("growth-btn").disabled = false;
+  };
+  if (!window.Paddle) { const s = document.createElement("script"); s.src = "https://cdn.paddle.com/paddle/v2/paddle.js"; s.onload = open; document.head.appendChild(s); }
+  else open();
+}
+$("growth-btn").addEventListener("click", launchPaddle);
+$("enterprise-btn").addEventListener("click", () => window.location.href = "mailto:hello@nimbus.ai");
+
+// ── AUTH ──────────────────────────────────────────────────────
+function setAuthMode(mode) {
+  authMode = mode;
+  setText("auth-subtitle", mode === "signup" ? "Create your account" : "Sign in to your account");
+  setText("auth-submit", mode === "signup" ? "Create account" : "Sign in");
+  setText("auth-toggle", mode === "signup" ? "Sign in" : "Sign up");
+  setText("auth-toggle-text", mode === "signup" ? "Already have an account? " : "No account? ");
+  mode === "signup" ? show("name-field") : hide("name-field");
+  hide("auth-error"); hide("auth-success");
+}
+$("auth-toggle").addEventListener("click", e => { e.preventDefault(); setAuthMode(authMode === "signin" ? "signup" : "signin"); });
+$("auth-submit").addEventListener("click", async () => {
+  const email = $("auth-email").value.trim(), password = $("auth-password").value;
+  hide("auth-error"); hide("auth-success");
+  $("auth-submit").textContent = "…"; $("auth-submit").disabled = true;
+  if (authMode === "signup") {
+    const name = $("auth-name").value.trim();
+    const { error } = await sb.auth.signUp({ email, password, options:{ data:{name} } });
+    error ? (show("auth-error"), setText("auth-error", error.message)) : (show("auth-success"), setText("auth-success", "Check your email to confirm, then sign in."));
+  } else {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    error ? (show("auth-error"), setText("auth-error", error.message)) : bootApp(data.user);
+  }
+  $("auth-submit").textContent = authMode === "signup" ? "Create account" : "Sign in";
+  $("auth-submit").disabled = false;
+});
+$("auth-password").addEventListener("keydown", e => { if (e.key === "Enter") $("auth-submit").click(); });
+$("signout-btn").addEventListener("click", async () => {
+  await sb.auth.signOut(); currentUser = null; currentProfile = null;
+  showScreen("auth"); setAuthMode("signin");
+});
+
+// ── BOOT ──────────────────────────────────────────────────────
+async function bootApp(user) {
+  currentUser = user; showScreen("app");
+  setText("nav-email", user.email);
+  await fetchProfile(user.id);
+  await loadLeads();
+}
+
+(async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  setTimeout(() => document.getElementById("loader").classList.add("fade"), 1800);
+  if (session?.user) await bootApp(session.user);
+  else showScreen("auth");
+  sb.auth.onAuthStateChange(async (_, session) => {
+    if (session?.user && !currentUser) await bootApp(session.user);
+  });
+})();
 </script>
 </body>
 </html>
