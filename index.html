@@ -709,7 +709,7 @@ $("modal-save").addEventListener("click", async () => {
 
 // ── FOLLOW-UP AI ──────────────────────────────────────────────
 async function loadFULeads() {
-  const { data } = await sb.from("leads").select("id,name,company,country,channel,score,notes").order("created_at",{ascending:false}).limit(30);
+  const { data } = await sb.from("leads").select("id,name,email,company,country,channel,score,notes").order("created_at",{ascending:false}).limit(30);
   fuLeads = data || [];
   const sidebar = $("fu-lead-list");
   if (!fuLeads.length) { sidebar.innerHTML = ""; show("fu-no-leads"); hide("fu-generate-btn"); return; }
