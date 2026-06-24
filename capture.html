@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get in touch — Nimbus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #04050f;
+      --surface: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.09);
+      --accent: #6C63FF;
+      --accent-glow: rgba(108,99,255,0.35);
+      --text: #e8e8f0;
+      --muted: rgba(232,232,240,0.45);
+      --success: #22C55E;
+      --danger: #EF4444;
+    }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 44px 40px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 0 80px rgba(108,99,255,0.08);
+    }
+    .brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, #fff 30%, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 28px;
+    }
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.55;
+    }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .field select option { background: #1a1b2e; }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 24px var(--accent-glow);
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 0 40px var(--accent-glow); }
+    .btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+    }
+    /* Success state */
+    .success-state { display: none; text-align: center; padding: 20px 0; }
+    .success-icon { font-size: 52px; margin-bottom: 18px; }
+    .success-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+    .success-sub { color: var(--muted); font-size: 14px; line-height: 1.6; }
+    /* Error state */
+    .config-error { text-align: center; padding: 20px 0; display: none; }
+    /* Loading */
+    .loading-state { display: none; text-align: center; padding: 40px 0; color: var(--muted); }
+    input::placeholder { color: rgba(232,232,240,0.2); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">NIMBUS</div>
+
+  <!-- Loading while resolving uid -->
+  <div class="loading-state" id="loading-state">
+    <div style="font-size:13px;">Loading…</div>
+  </div>
+
+  <!-- Config error (bad uid) -->
+  <div class="config-error" id="config-error">
+    <div style="font-size:40px;margin-bottom:14px;">⚠️</div>
+    <div style="font-weight:600;font-size:16px;margin-bottom:8px;">Invalid form link</div>
+    <div style="color:var(--muted);font-size:13px;">This lead capture link appears to be broken. Please contact the sender for a new link.</div>
+  </div>
+
+  <!-- The form -->
+  <div id="form-state">
+    <h1>Let's connect</h1>
+    <p class="sub">Fill in your details and we'll be in touch shortly.</p>
+
+    <div class="field">
+      <label>Full name *</label>
+      <input type="text" id="c-name" placeholder="Jane Smith" autocomplete="name" />
+    </div>
+    <div class="field">
+      <label>Email address *</label>
+      <input type="email" id="c-email" placeholder="jane@company.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Company</label>
+      <input type="text" id="c-company" placeholder="Acme Corp" autocomplete="organization" />
+    </div>
+    <div class="field">
+      <label>Country</label>
+      <select id="c-country">
+        <option value="">Select country…</option>
+        <option>South Africa</option><option>United States</option><option>United Kingdom</option>
+        <option>Australia</option><option>Canada</option><option>Germany</option>
+        <option>France</option><option>Netherlands</option><option>India</option>
+        <option>Nigeria</option><option>Kenya</option><option>UAE</option>
+        <option>Singapore</option><option>Brazil</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>How did you hear about us?</label>
+      <select id="c-channel">
+        <option value="">Select…</option>
+        <option>LinkedIn</option><option>Web search</option><option>Referral</option>
+        <option>Social media</option><option>Email</option><option>Event</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Anything you'd like to share?</label>
+      <textarea id="c-notes" placeholder="Tell us about your needs, timeline, or questions…"></textarea>
+    </div>
+
+    <button class="btn" id="c-submit-btn">Submit →</button>
+    <div class="error-msg" id="c-error"></div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-state" id="success-state">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">You're on the radar!</div>
+    <div class="success-sub">Thanks for reaching out. We've received your details and will be in touch soon.</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL      = "https://rnsdgomztwckhiwufoxp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuc2Rnb216dHdja2hpd3Vmb3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMDgxODEsImV4cCI6MjA5Nzc4NDE4MX0.bEcyjHK6NZl6tdY2eq7VysjE4bWTjkAPn3ZDc4UtCs0";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = id => document.getElementById(id);
+
+function show(id) { $(id).style.display = "block"; }
+function hide(id) { $(id).style.display = "none"; }
+
+// Read uid from URL
+const params = new URLSearchParams(window.location.search);
+const uid = params.get("uid");
+
+if (!uid) {
+  hide("form-state");
+  show("config-error");
+} else {
+  // Validate uid exists (optional — we just trust it for now)
+}
+
+$("c-submit-btn").addEventListener("click", async () => {
+  const name = $("c-name").value.trim();
+  const email = $("c-email").value.trim();
+  const company = $("c-company").value.trim();
+  const country = $("c-country").value;
+  const channel = $("c-channel").value;
+  const notes = $("c-notes").value.trim();
+
+  // Basic validation
+  if (!name) return showError("Please enter your full name.");
+  if (!email || !email.includes("@")) return showError("Please enter a valid email address.");
+
+  $("c-submit-btn").textContent = "Submitting…";
+  $("c-submit-btn").disabled = true;
+  hide("c-error");
+
+  const { error } = await sb.from("leads").insert({
+    user_id: uid,
+    name,
+    email,
+    company: company || null,
+    country: country || null,
+    channel: channel || "Web form",
+    notes: notes || null,
+    score: 50,          // default score for captured leads
+    source: "capture_form"
+  });
+
+  if (error) {
+    $("c-submit-btn").textContent = "Submit →";
+    $("c-submit-btn").disabled = false;
+    showError("Something went wrong. Please try again. (" + error.message + ")");
+    return;
+  }
+
+  // Success
+  hide("form-state");
+  show("success-state");
+});
+
+function showError(msg) {
+  $("c-error").textContent = msg;
+  $("c-error").style.display = "block";
+}
+</script>
+</body>
+</html>
