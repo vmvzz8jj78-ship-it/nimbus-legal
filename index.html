@@ -223,7 +223,7 @@ for(let i=0;i<p2Count;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t);p2P
 p2Geo.setAttribute('position',new THREE.BufferAttribute(p2Pos,3));
 scene.add(new THREE.Points(p2Geo,new THREE.PointsMaterial({color:0xe879f9,size:0.018,transparent:true,opacity:0.3,sizeAttenuation:true,blending:THREE.AdditiveBlending,depthWrite:false})));
 const shapeGroup=new THREE.Group(),shapeGeos=[new THREE.OctahedronGeometry(0.08,0),new THREE.TetrahedronGeometry(0.06,0),new THREE.IcosahedronGeometry(0.05,0)];
-for(let i=0;i<40;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t),geo=shapeGeos[Math.floor(Math.random()*shapeGeos.length)],mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0x6C63FF:0xe879f9,transparent:true,opacity:0.1+Math.random()*0.15,wireframe:true,blending:THREE.AdditiveBlending}),mesh=new THREE.Mesh(geo,mat);mesh.position.set(pt.x+(Math.random()-0.5)*5,pt.y+(Math.random()-0.5)*5,pt.z+(Math.random()-0.5)*3);mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);mesh.userData.rot={(x:(Math.random()-0.5)*0.015),(y:(Math.random()-0.5)*0.015)};shapeGroup.add(mesh);}
+for(let i=0;i<40;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t),geo=shapeGeos[Math.floor(Math.random()*shapeGeos.length)],mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0x6C63FF:0xe879f9,transparent:true,opacity:0.1+Math.random()*0.15,wireframe:true,blending:THREE.AdditiveBlending}),mesh=new THREE.Mesh(geo,mat);mesh.position.set(pt.x+(Math.random()-0.5)*5,pt.y+(Math.random()-0.5)*5,pt.z+(Math.random()-0.5)*3);mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);mesh.userData.rot={x:(Math.random()-0.5)*0.015,y:(Math.random()-0.5)*0.015};shapeGroup.add(mesh);}
 scene.add(shapeGroup);
 const cam={progress:0};
 gsap.timeline({scrollTrigger:{trigger:'#scroll-container',start:'top top',end:'bottom bottom',scrub:1.5}}).to(cam,{progress:1,duration:1,ease:'none'});
@@ -238,7 +238,13 @@ const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const elapsed=clock.getElapsedTime(),progress=cam.progress,t=Math.min(progress*0.85+0.02,0.97),pos=tunnelPath.getPointAt(t),look=tunnelPath.getPointAt(Math.min(t+0.015,0.999));camera.position.set(pos.x+mouse.x*0.2,pos.y-mouse.y*0.1,pos.z);camera.lookAt(look.x,look.y,look.z);scene.fog.color.copy(lerpColors(fogColors,progress));scene.background.copy(lerpColors(bgColors,progress));scene.fog.density=0.016+Math.sin(progress*Math.PI)*0.01;const arr=pGeo.attributes.position.array;for(let i=0;i<particleCount;i++){arr[i*3]+=Math.sin(elapsed*0.3+i*0.2)*0.0008;arr[i*3+1]+=Math.cos(elapsed*0.4+i*0.15)*0.0008;}pGeo.attributes.position.needsUpdate=true;shapeGroup.children.forEach(m=>{m.rotation.x+=m.userData.rot.x;m.rotation.y+=m.userData.rot.y;});renderer.render(scene,camera);}
 animate();
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-window.addEventListener('load',()=>{setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1800);});
+function hideLoader(){document.getElementById('loader').classList.add('hidden');}
+setTimeout(hideLoader,2500);
+document.addEventListener('DOMContentLoaded',function(){setTimeout(hideLoader,1800);});
+window.addEventListener('load',function(){hideLoader();});
 </script>
 </body>
 </html>
+ 
+
+
