@@ -747,7 +747,22 @@ async function genFollowUp() {
     const res = await fetch("https://rnsdgomztwckhiwufoxp.supabase.co/functions/v1/claude-proxy", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:600,
-        messages:[{role:"user",content:`Write a short personalised B2B follow-up email for this lead:\nName: ${fuSelected.name}\nCompany: ${fuSelected.company||"unknown"}\nCountry: ${fuSelected.country||"unknown"}\nChannel: ${fuSelected.channel||"unknown"}\nScore: ${fuSelected.score}/100\nNotes: ${fuSelected.notes||"none"}\n\nTone: professional but warm. Max 120 words. Include subject line.`}]
+        messages:[{role:"user",content:`Write a short personalised B2B follow-up email for this lead:
+Name: ${fuSelected.name}
+Company: ${fuSelected.company||"their company"}
+Country: ${fuSelected.country||"unknown"}
+Channel: ${fuSelected.channel||"unknown"}
+Score: ${fuSelected.score}/100
+Notes: ${fuSelected.notes||"none"}
+
+Rules:
+- Start with "Subject:" on the first line, then a blank line, then the email body
+- Do NOT use asterisks or markdown formatting anywhere
+- Sign off with the sender's actual name: sign it from "The Nimbus Team" 
+- Mention the company name (${fuSelected.company||"their company"}) naturally in the email
+- Tone: professional but warm
+- Max 120 words total (excluding subject line)
+- No placeholders like [Your Name] or [Company]`}]
       }),
     });
     const d = await res.json();
