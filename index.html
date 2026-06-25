@@ -8,160 +8,51 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { overflow-x: hidden; background: #04050f; color: #e8e8f0; font-family: 'Inter', sans-serif; font-weight: 300; -webkit-font-smoothing: antialiased; }
-
-    /* Loader */
-    #loader {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #04050f;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      transition: opacity 1s ease, visibility 1s ease;
-    }
+    #loader { position: fixed; inset: 0; z-index: 9999; background: #04050f; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s ease, visibility 1s ease; }
     #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     #loader .brand { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: 0.2em; color: #fff; margin-bottom: 40px; }
     #loader .bar-track { width: 160px; height: 1px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
     #loader .bar-fill { position: absolute; top: 0; left: 0; width: 0%; height: 100%; background: linear-gradient(90deg, #6C63FF, #a78bfa); animation: loadbar 2s ease-out forwards; }
     #loader .sub { margin-top: 20px; font-size: 10px; letter-spacing: 0.3em; color: rgba(255,255,255,0.3); text-transform: uppercase; }
     @keyframes loadbar { to { width: 100%; } }
-
-    /* Canvas */
     canvas { position: fixed; top: 0; left: 0; z-index: 0; }
-
-    /* Vignette */
-    .vignette {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 40%, rgba(4,5,15,0.7) 100%);
-    }
-
-    /* Scanlines */
-    .scanlines {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px);
-    }
-
-    /* Scroll progress */
+    .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 40%, rgba(4,5,15,0.7) 100%); }
+    .scanlines { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px); }
     .scroll-bar { position: fixed; top: 0; left: 0; height: 1px; background: linear-gradient(90deg, #6C63FF, #a78bfa); z-index: 200; width: 0%; transition: width 0.1s linear; }
-
-    /* Nav */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 28px 48px;
-      display: flex; align-items: center; justify-content: space-between;
-      transition: all 0.4s ease;
-    }
-    nav.scrolled {
-      padding: 16px 48px;
-      background: rgba(4,5,15,0.8);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; transition: all 0.4s ease; }
+    nav.scrolled { padding: 16px 48px; background: rgba(4,5,15,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.04); }
     .nav-brand { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 0.05em; color: #fff; text-decoration: none; }
     .nav-links { display: flex; align-items: center; gap: 36px; }
     .nav-links a { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.5); text-decoration: none; letter-spacing: 0.05em; transition: color 0.2s; }
     .nav-links a:hover { color: #fff; }
     .nav-cta { font-size: 13px; font-weight: 500; color: #04050f; background: #fff; padding: 10px 22px; border-radius: 100px; text-decoration: none; letter-spacing: 0.02em; transition: all 0.2s; }
     .nav-cta:hover { background: #a78bfa; color: #fff; }
-
-    /* Scroll container */
     .scroll-container { position: relative; z-index: 2; pointer-events: none; }
     .section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 5vh 8vw; position: relative; }
-    #s0 { min-height: 180vh; }
-    #s1 { min-height: 120vh; }
-    #s2 { min-height: 120vh; }
-    #s3 { min-height: 120vh; }
-    #s4 { min-height: 100vh; }
-
-    /* Content */
+    #s0 { min-height: 180vh; } #s1 { min-height: 120vh; } #s2 { min-height: 120vh; } #s3 { min-height: 120vh; } #s4 { min-height: 100vh; }
     .content { pointer-events: auto; max-width: 580px; opacity: 0; transform: translateY(50px); transition: opacity 0.8s ease, transform 0.8s ease; }
     .content.visible { opacity: 1; transform: translateY(0); }
-    .content.left { margin-right: auto; }
-    .content.right { margin-left: auto; }
-    .content.center { text-align: center; margin: 0 auto; }
-
-    /* Glass panel */
-    .glass {
-      background: rgba(10,10,30,0.5);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 40px 48px;
-      position: relative;
-      overflow: hidden;
-    }
-    .glass::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(108,99,255,0.6), transparent);
-    }
-
-    /* Eyebrow */
-    .eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 11px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
-      color: #6C63FF; margin-bottom: 24px;
-    }
+    .content.left { margin-right: auto; } .content.right { margin-left: auto; } .content.center { text-align: center; margin: 0 auto; }
+    .glass { background: rgba(10,10,30,0.5); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 40px 48px; position: relative; overflow: hidden; }
+    .glass::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(108,99,255,0.6), transparent); }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: #6C63FF; margin-bottom: 24px; }
     .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: #6C63FF; animation: pulse-dot 2s ease-in-out infinite; }
     @keyframes pulse-dot { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
-
-    /* Hero headline */
-    h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(3.2rem, 7vw, 6rem);
-      font-weight: 800;
-      line-height: 1.0;
-      letter-spacing: -0.02em;
-      color: #fff;
-      margin-bottom: 28px;
-    }
-    h1 .accent {
-      background: linear-gradient(135deg, #6C63FF, #a78bfa, #e879f9);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(2rem, 4vw, 3.2rem);
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-      color: #fff;
-      margin-bottom: 20px;
-    }
+    h1 { font-family: 'Syne', sans-serif; font-size: clamp(3.2rem, 7vw, 6rem); font-weight: 800; line-height: 1.0; letter-spacing: -0.02em; color: #fff; margin-bottom: 28px; }
+    h1 .accent { background: linear-gradient(135deg, #6C63FF, #a78bfa, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin-bottom: 20px; }
     .body-text { font-size: 16px; line-height: 1.8; color: rgba(232,232,240,0.6); margin-bottom: 20px; }
-
-    /* Stats */
     .stats-row { display: flex; gap: 40px; margin-top: 40px; flex-wrap: wrap; }
-    .stat-item {}
     .stat-num { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff; line-height: 1; }
     .stat-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 6px; }
-
-    /* Feature list */
     .feature-list { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
-    .feature-item {
-      display: flex; align-items: flex-start; gap: 16px;
-      padding: 20px 24px;
-      background: rgba(108,99,255,0.05);
-      border: 1px solid rgba(108,99,255,0.1);
-      border-radius: 12px;
-      transition: border-color 0.2s, background 0.2s;
-    }
+    .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; background: rgba(108,99,255,0.05); border: 1px solid rgba(108,99,255,0.1); border-radius: 12px; transition: border-color 0.2s, background 0.2s; }
     .feature-item:hover { border-color: rgba(108,99,255,0.3); background: rgba(108,99,255,0.08); }
     .feature-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: #6C63FF; letter-spacing: 0.1em; min-width: 28px; margin-top: 2px; }
     .feature-body h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
     .feature-body p { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.45); margin: 0; }
-
-    /* Pricing */
     .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
-    .plan-card {
-      background: rgba(10,10,30,0.6);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 28px 24px;
-      position: relative;
-      transition: border-color 0.3s, transform 0.3s;
-    }
+    .plan-card { background: rgba(10,10,30,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px 24px; position: relative; transition: border-color 0.3s, transform 0.3s; }
     .plan-card:hover { border-color: rgba(108,99,255,0.3); transform: translateY(-4px); }
     .plan-card.featured { border-color: rgba(108,99,255,0.4); background: rgba(108,99,255,0.08); }
     .plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #6C63FF, #a78bfa); color: #fff; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 100px; white-space: nowrap; }
@@ -171,75 +62,27 @@
     .plan-features { list-style: none; margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
     .plan-features li { font-size: 13px; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 8px; }
     .plan-features li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: #6C63FF; flex-shrink: 0; }
-    .plan-btn {
-      display: block; margin-top: 24px; padding: 12px;
-      text-align: center; text-decoration: none;
-      font-size: 13px; font-weight: 500; letter-spacing: 0.05em;
-      border-radius: 8px; transition: all 0.2s;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.7);
-    }
+    .plan-btn { display: block; margin-top: 24px; padding: 12px; text-align: center; text-decoration: none; font-size: 13px; font-weight: 500; letter-spacing: 0.05em; border-radius: 8px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
     .plan-card.featured .plan-btn { background: linear-gradient(135deg, #6C63FF, #a78bfa); border: none; color: #fff; }
     .plan-btn:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.4); color: #fff; }
     .plan-card.featured .plan-btn:hover { opacity: 0.9; }
-
-    /* Hero CTAs */
     .cta-row { display: flex; align-items: center; gap: 16px; margin-top: 36px; flex-wrap: wrap; }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 15px; font-weight: 500; color: #fff;
-      background: linear-gradient(135deg, #6C63FF, #a78bfa);
-      padding: 14px 32px; border-radius: 100px; text-decoration: none;
-      transition: all 0.3s; box-shadow: 0 0 40px rgba(108,99,255,0.3);
-    }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; color: #fff; background: linear-gradient(135deg, #6C63FF, #a78bfa); padding: 14px 32px; border-radius: 100px; text-decoration: none; transition: all 0.3s; box-shadow: 0 0 40px rgba(108,99,255,0.3); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(108,99,255,0.5); }
-    .btn-ghost {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 14px; color: rgba(255,255,255,0.5); text-decoration: none;
-      transition: color 0.2s;
-    }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
     .btn-ghost:hover { color: #fff; }
     .btn-ghost .arrow { transition: transform 0.2s; }
     .btn-ghost:hover .arrow { transform: translateX(4px); }
-
-    /* Trust badges */
     .trust-row { display: flex; align-items: center; gap: 24px; margin-top: 48px; flex-wrap: wrap; }
     .trust-item { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); }
     .trust-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.1); }
-
-    /* Side label */
-    .side-label {
-      position: absolute; left: -60px; top: 50%;
-      font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
-      color: rgba(255,255,255,0.15);
-      transform: translateY(-50%) rotate(-90deg);
-      white-space: nowrap;
-    }
-
-    /* Footer */
-    footer {
-      position: relative; z-index: 2;
-      padding: 40px 48px;
-      border-top: 1px solid rgba(255,255,255,0.04);
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    footer { position: relative; z-index: 2; padding: 40px 48px; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; }
     footer .brand { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: rgba(255,255,255,0.3); }
     footer .links { display: flex; gap: 24px; }
     footer .links a { font-size: 12px; color: rgba(255,255,255,0.2); text-decoration: none; transition: color 0.2s; }
     footer .links a:hover { color: rgba(255,255,255,0.6); }
     footer .copy { font-size: 12px; color: rgba(255,255,255,0.15); }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      nav { padding: 20px 24px; }
-      nav.scrolled { padding: 14px 24px; }
-      .nav-links { display: none; }
-      .section { padding: 5vh 6vw; }
-      .glass { padding: 28px 24px; }
-      .pricing-grid { grid-template-columns: 1fr; }
-      .stats-row { gap: 24px; }
-      footer { flex-direction: column; gap: 16px; text-align: center; }
-    }
+    @media (max-width: 768px) { nav { padding: 20px 24px; } nav.scrolled { padding: 14px 24px; } .nav-links { display: none; } .section { padding: 5vh 6vw; } .glass { padding: 28px 24px; } .pricing-grid { grid-template-columns: 1fr; } .stats-row { gap: 24px; } footer { flex-direction: column; gap: 16px; text-align: center; } }
   </style>
 </head>
 <body>
@@ -253,7 +96,6 @@
 <div class="scroll-bar" id="scrollBar"></div>
 <div class="vignette"></div>
 <div class="scanlines"></div>
-
 <canvas id="c"></canvas>
 
 <nav id="nav">
@@ -263,19 +105,18 @@
     <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
   </div>
-  <a href="/auth" class="nav-cta">Get started</a>
+  <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="nav-cta">Get started</a>
 </nav>
 
 <div class="scroll-container" id="scroll-container">
 
-  <!-- HERO -->
   <section class="section" id="s0">
     <div class="content left" id="c0">
       <div class="eyebrow"><span class="eyebrow-dot"></span>AI Sales Platform</div>
       <h1>Turn every lead into <span class="accent">closed revenue.</span></h1>
       <p class="body-text">Capture, qualify, and follow up with leads in any language — in seconds. Nimbus replaces your entire outbound workflow with AI that never sleeps.</p>
       <div class="cta-row">
-        <a href="/auth" class="btn-primary">Start for free <span>→</span></a>
+        <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="btn-primary">Start for free <span>→</span></a>
         <a href="#features" class="btn-ghost">See how it works <span class="arrow">→</span></a>
       </div>
       <div class="trust-row">
@@ -293,71 +134,32 @@
     </div>
   </section>
 
-  <!-- FEATURES -->
   <section class="section" id="s1">
     <div class="content left glass" id="c1" style="max-width:620px">
       <div class="eyebrow"><span class="eyebrow-dot"></span>Product</div>
       <h2>Everything your sales team needs.</h2>
       <p class="body-text">Three AI-powered modules that work together to move leads from first touch to closed deal.</p>
       <div class="feature-list">
-        <div class="feature-item">
-          <div class="feature-num">01</div>
-          <div class="feature-body">
-            <h3>Lead Pipeline</h3>
-            <p>Every lead scored, enriched, and ranked automatically. Know exactly who to call first.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">02</div>
-          <div class="feature-body">
-            <h3>Follow-up AI</h3>
-            <p>Personalized outreach emails written in seconds. Reference the lead's company, role, and channel — automatically.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">03</div>
-          <div class="feature-body">
-            <h3>Qualify AI</h3>
-            <p>Chat-based qualification that asks the right BANT questions and scores prospects before your reps get involved.</p>
-          </div>
-        </div>
+        <div class="feature-item"><div class="feature-num">01</div><div class="feature-body"><h3>Lead Pipeline</h3><p>Every lead scored, enriched, and ranked automatically. Know exactly who to call first.</p></div></div>
+        <div class="feature-item"><div class="feature-num">02</div><div class="feature-body"><h3>Follow-up AI</h3><p>Personalized outreach emails written in seconds. Reference the lead's company, role, and channel — automatically.</p></div></div>
+        <div class="feature-item"><div class="feature-num">03</div><div class="feature-body"><h3>Qualify AI</h3><p>Chat-based qualification that asks the right BANT questions and scores prospects before your reps get involved.</p></div></div>
       </div>
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
   <section class="section" id="s2">
     <div class="content right glass" id="c2" style="max-width:560px">
       <div class="eyebrow"><span class="eyebrow-dot"></span>How it works</div>
       <h2>Set up in under 10 minutes.</h2>
       <p class="body-text">No engineers needed. Paste your first lead and Nimbus handles everything from there.</p>
       <div class="feature-list">
-        <div class="feature-item">
-          <div class="feature-num">01</div>
-          <div class="feature-body">
-            <h3>Connect your lead sources</h3>
-            <p>Import from CSV, web form, LinkedIn, or any channel. Leads flow in automatically.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">02</div>
-          <div class="feature-body">
-            <h3>AI enriches and scores</h3>
-            <p>Every lead gets a score, a status, and a recommended next action — instantly.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">03</div>
-          <div class="feature-body">
-            <h3>Follow up and close</h3>
-            <p>One click to generate a personalized email. Send it, track replies, and move the deal forward.</p>
-          </div>
-        </div>
+        <div class="feature-item"><div class="feature-num">01</div><div class="feature-body"><h3>Connect your lead sources</h3><p>Import from CSV, web form, LinkedIn, or any channel. Leads flow in automatically.</p></div></div>
+        <div class="feature-item"><div class="feature-num">02</div><div class="feature-body"><h3>AI enriches and scores</h3><p>Every lead gets a score, a status, and a recommended next action — instantly.</p></div></div>
+        <div class="feature-item"><div class="feature-num">03</div><div class="feature-body"><h3>Follow up and close</h3><p>One click to generate a personalized email. Send it, track replies, and move the deal forward.</p></div></div>
       </div>
     </div>
   </section>
 
-  <!-- PRICING -->
   <section class="section" id="s3">
     <div class="content center glass" id="c3" style="max-width:860px;width:100%">
       <div class="eyebrow" style="justify-content:center"><span class="eyebrow-dot"></span>Pricing</div>
@@ -367,51 +169,32 @@
         <div class="plan-card">
           <div class="plan-name">Starter</div>
           <div class="plan-price">$50 <span>/month</span></div>
-          <ul class="plan-features">
-            <li>Up to 100 leads/mo</li>
-            <li>Pipeline view</li>
-            <li>AI scoring</li>
-            <li>1 seat</li>
-          </ul>
-          <a href="/auth" class="plan-btn">Get started</a>
+          <ul class="plan-features"><li>Up to 100 leads/mo</li><li>Pipeline view</li><li>AI scoring</li><li>1 seat</li></ul>
+          <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="plan-btn">Get started</a>
         </div>
         <div class="plan-card featured">
           <div class="plan-badge">Most popular</div>
           <div class="plan-name">Growth</div>
           <div class="plan-price">$300 <span>/ month</span></div>
-          <ul class="plan-features">
-            <li>10,000 leads/mo</li>
-            <li>Follow-up AI</li>
-            <li>Qualify AI</li>
-            <li>30+ languages</li>
-            <li>5 seats</li>
-            <li>CRM sync</li>
-          </ul>
-          <a href="/auth" class="plan-btn">Upgrade to Growth</a>
+          <ul class="plan-features"><li>10,000 leads/mo</li><li>Follow-up AI</li><li>Qualify AI</li><li>30+ languages</li><li>5 seats</li><li>CRM sync</li></ul>
+          <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="plan-btn">Upgrade to Growth</a>
         </div>
         <div class="plan-card">
           <div class="plan-name">Enterprise</div>
           <div class="plan-price">Custom <span>/ annual</span></div>
-          <ul class="plan-features">
-            <li>Unlimited leads</li>
-            <li>Custom AI training</li>
-            <li>SOC 2 + SSO</li>
-            <li>Dedicated support</li>
-            <li>Unlimited seats</li>
-          </ul>
-          <a href="mailto:sales@usenimbus.ai" class="plan-btn">Contact sales</a>
+          <ul class="plan-features"><li>Unlimited leads</li><li>Custom AI training</li><li>SOC 2 + SSO</li><li>Dedicated support</li><li>Unlimited seats</li></ul>
+          <a href="mailto:hello@nimbusapp.uk" class="plan-btn">Contact sales</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
   <section class="section" id="s4">
     <div class="content center" id="c4">
       <div class="eyebrow" style="justify-content:center"><span class="eyebrow-dot"></span>Get started today</div>
       <h1 style="font-size:clamp(2.4rem,5vw,4.5rem)">Your next deal is waiting.</h1>
       <p class="body-text" style="max-width:440px;margin:0 auto 36px">Join teams across 40+ countries using Nimbus to turn leads into revenue — faster than ever.</p>
-      <a href="/auth" class="btn-primary" style="font-size:17px;padding:16px 40px">Start for free →</a>
+      <a href="https://vmvzz8jj78-ship-it.github.io/nimbus-app/" class="btn-primary" style="font-size:17px;padding:16px 40px">Start for free →</a>
     </div>
   </section>
 
@@ -423,7 +206,7 @@
     <a href="/terms">Terms</a>
     <a href="/privacy">Privacy</a>
     <a href="/refunds">Refunds</a>
-    <a href="mailto:hello@usenimbus.ai">Contact</a>
+    <a href="mailto:hello@nimbusapp.uk">Contact</a>
   </div>
   <div class="copy">© 2026 Nimbus. All rights reserved.</div>
 </footer>
@@ -431,232 +214,47 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-
 <script>
 gsap.registerPlugin(ScrollTrigger);
-
-// ---- Three.js scene ----
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x04050f, 0.018);
 scene.background = new THREE.Color(0x04050f);
-
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 0, 5);
-
-// ---- Tunnel path ----
-const tunnelPath = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(-1.5, 1, -8),
-  new THREE.Vector3(1, -0.5, -16),
-  new THREE.Vector3(-0.5, 1.5, -24),
-  new THREE.Vector3(0.5, -1, -32),
-  new THREE.Vector3(0, 0.5, -40),
-], false, 'catmullrom', 0.5);
-
-// ---- Tube ----
-const tubeGeo = new THREE.TubeGeometry(tunnelPath, 300, 1.4, 12, false);
-const tubeMat = new THREE.MeshBasicMaterial({
-  color: 0x6C63FF,
-  side: THREE.BackSide,
-  wireframe: true,
-  transparent: true,
-  opacity: 0.04,
-});
-const tube = new THREE.Mesh(tubeGeo, tubeMat);
-scene.add(tube);
-
-// ---- Particles ----
-const particleCount = 2000;
-const pGeo = new THREE.BufferGeometry();
-const pPos = new Float32Array(particleCount * 3);
-for (let i = 0; i < particleCount; i++) {
-  const t = Math.random();
-  const pt = tunnelPath.getPointAt(t);
-  pPos[i * 3]     = pt.x + (Math.random() - 0.5) * 4;
-  pPos[i * 3 + 1] = pt.y + (Math.random() - 0.5) * 4;
-  pPos[i * 3 + 2] = pt.z + (Math.random() - 0.5) * 3;
-}
-pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-const pMat = new THREE.PointsMaterial({
-  color: 0x8b85ff,
-  size: 0.025,
-  transparent: true,
-  opacity: 0.6,
-  sizeAttenuation: true,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-});
-const particles = new THREE.Points(pGeo, pMat);
-scene.add(particles);
-
-// ---- Pink accent particles ----
-const p2Count = 800;
-const p2Geo = new THREE.BufferGeometry();
-const p2Pos = new Float32Array(p2Count * 3);
-for (let i = 0; i < p2Count; i++) {
-  const t = Math.random();
-  const pt = tunnelPath.getPointAt(t);
-  p2Pos[i * 3]     = pt.x + (Math.random() - 0.5) * 5;
-  p2Pos[i * 3 + 1] = pt.y + (Math.random() - 0.5) * 5;
-  p2Pos[i * 3 + 2] = pt.z + (Math.random() - 0.5) * 4;
-}
-p2Geo.setAttribute('position', new THREE.BufferAttribute(p2Pos, 3));
-const p2Mat = new THREE.PointsMaterial({
-  color: 0xe879f9,
-  size: 0.018,
-  transparent: true,
-  opacity: 0.3,
-  sizeAttenuation: true,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-});
-scene.add(new THREE.Points(p2Geo, p2Mat));
-
-// ---- Floating shapes ----
-const shapeGroup = new THREE.Group();
-const shapeGeos = [
-  new THREE.OctahedronGeometry(0.08, 0),
-  new THREE.TetrahedronGeometry(0.06, 0),
-  new THREE.IcosahedronGeometry(0.05, 0),
-];
-for (let i = 0; i < 40; i++) {
-  const t = Math.random();
-  const pt = tunnelPath.getPointAt(t);
-  const geo = shapeGeos[Math.floor(Math.random() * shapeGeos.length)];
-  const mat = new THREE.MeshBasicMaterial({
-    color: Math.random() > 0.5 ? 0x6C63FF : 0xe879f9,
-    transparent: true,
-    opacity: 0.1 + Math.random() * 0.15,
-    wireframe: true,
-    blending: THREE.AdditiveBlending,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(
-    pt.x + (Math.random() - 0.5) * 5,
-    pt.y + (Math.random() - 0.5) * 5,
-    pt.z + (Math.random() - 0.5) * 3
-  );
-  mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-  mesh.userData.rot = { x: (Math.random() - 0.5) * 0.015, y: (Math.random() - 0.5) * 0.015 };
-  shapeGroup.add(mesh);
-}
+const tunnelPath = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0),new THREE.Vector3(-1.5,1,-8),new THREE.Vector3(1,-0.5,-16),new THREE.Vector3(-0.5,1.5,-24),new THREE.Vector3(0.5,-1,-32),new THREE.Vector3(0,0.5,-40)],false,'catmullrom',0.5);
+const tubeGeo = new THREE.TubeGeometry(tunnelPath,300,1.4,12,false);
+const tubeMat = new THREE.MeshBasicMaterial({color:0x6C63FF,side:THREE.BackSide,wireframe:true,transparent:true,opacity:0.04});
+scene.add(new THREE.Mesh(tubeGeo,tubeMat));
+const particleCount=2000,pGeo=new THREE.BufferGeometry(),pPos=new Float32Array(particleCount*3);
+for(let i=0;i<particleCount;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t);pPos[i*3]=pt.x+(Math.random()-0.5)*4;pPos[i*3+1]=pt.y+(Math.random()-0.5)*4;pPos[i*3+2]=pt.z+(Math.random()-0.5)*3;}
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const pMat=new THREE.PointsMaterial({color:0x8b85ff,size:0.025,transparent:true,opacity:0.6,sizeAttenuation:true,blending:THREE.AdditiveBlending,depthWrite:false});
+const particles=new THREE.Points(pGeo,pMat);scene.add(particles);
+const p2Count=800,p2Geo=new THREE.BufferGeometry(),p2Pos=new Float32Array(p2Count*3);
+for(let i=0;i<p2Count;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t);p2Pos[i*3]=pt.x+(Math.random()-0.5)*5;p2Pos[i*3+1]=pt.y+(Math.random()-0.5)*5;p2Pos[i*3+2]=pt.z+(Math.random()-0.5)*4;}
+p2Geo.setAttribute('position',new THREE.BufferAttribute(p2Pos,3));
+scene.add(new THREE.Points(p2Geo,new THREE.PointsMaterial({color:0xe879f9,size:0.018,transparent:true,opacity:0.3,sizeAttenuation:true,blending:THREE.AdditiveBlending,depthWrite:false})));
+const shapeGroup=new THREE.Group(),shapeGeos=[new THREE.OctahedronGeometry(0.08,0),new THREE.TetrahedronGeometry(0.06,0),new THREE.IcosahedronGeometry(0.05,0)];
+for(let i=0;i<40;i++){const t=Math.random(),pt=tunnelPath.getPointAt(t),geo=shapeGeos[Math.floor(Math.random()*shapeGeos.length)],mat=new THREE.MeshBasicMaterial({color:Math.random()>0.5?0x6C63FF:0xe879f9,transparent:true,opacity:0.1+Math.random()*0.15,wireframe:true,blending:THREE.AdditiveBlending}),mesh=new THREE.Mesh(geo,mat);mesh.position.set(pt.x+(Math.random()-0.5)*5,pt.y+(Math.random()-0.5)*5,pt.z+(Math.random()-0.5)*3);mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);mesh.userData.rot={(x:(Math.random()-0.5)*0.015),(y:(Math.random()-0.5)*0.015)};shapeGroup.add(mesh);}
 scene.add(shapeGroup);
-
-// ---- Scroll camera ----
-const cam = { progress: 0 };
-gsap.timeline({
-  scrollTrigger: {
-    trigger: '#scroll-container',
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: 1.5,
-  }
-}).to(cam, { progress: 1, duration: 1, ease: 'none' });
-
-// ---- Mouse parallax ----
-const mouse = { x: 0, y: 0 };
-document.addEventListener('mousemove', e => {
-  mouse.x = (e.clientX / window.innerWidth - 0.5) * 2;
-  mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
-});
-
-// ---- Content fade-in ----
-['#c0','#c1','#c2','#c3','#c4'].forEach((sel, i) => {
-  const el = document.querySelector(sel);
-  if (!el) return;
-  gsap.fromTo(el,
-    { opacity: 0, y: 60 },
-    { opacity: 1, y: 0,
-      scrollTrigger: { trigger: '#s' + i, start: 'top 70%', end: 'top 30%', scrub: 1 }
-    }
-  );
-  if (i < 4) {
-    gsap.to(el, {
-      opacity: 0, y: -40,
-      scrollTrigger: { trigger: '#s' + i, start: 'bottom 65%', end: 'bottom 25%', scrub: 1 }
-    });
-  }
-});
-
-// ---- Scroll progress bar ----
-window.addEventListener('scroll', () => {
-  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
-  document.getElementById('scrollBar').style.width = pct + '%';
-  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
-});
-
-// ---- Fog transitions ----
-const fogColors = [
-  new THREE.Color(0x04050f),
-  new THREE.Color(0x08062a),
-  new THREE.Color(0x0d0730),
-  new THREE.Color(0x080622),
-  new THREE.Color(0x04050f),
-];
-const bgColors = [
-  new THREE.Color(0x04050f),
-  new THREE.Color(0x060720),
-  new THREE.Color(0x0a0928),
-  new THREE.Color(0x06071a),
-  new THREE.Color(0x04050f),
-];
-function lerpColors(arr, t) {
-  const ct = Math.max(0, Math.min(1, t));
-  const idx = ct * (arr.length - 1);
-  const lo = Math.floor(idx), hi = Math.min(lo + 1, arr.length - 1);
-  return new THREE.Color().copy(arr[lo]).lerp(arr[hi], idx - lo);
-}
-
-// ---- Render loop ----
-const clock = new THREE.Clock();
-function animate() {
-  requestAnimationFrame(animate);
-  const elapsed = clock.getElapsedTime();
-  const progress = cam.progress;
-
-  const t = Math.min(progress * 0.85 + 0.02, 0.97);
-  const pos = tunnelPath.getPointAt(t);
-  const look = tunnelPath.getPointAt(Math.min(t + 0.015, 0.999));
-  camera.position.set(pos.x + mouse.x * 0.2, pos.y - mouse.y * 0.1, pos.z);
-  camera.lookAt(look.x, look.y, look.z);
-
-  scene.fog.color.copy(lerpColors(fogColors, progress));
-  scene.background.copy(lerpColors(bgColors, progress));
-  scene.fog.density = 0.016 + Math.sin(progress * Math.PI) * 0.01;
-
-  // Drift particles
-  const arr = pGeo.attributes.position.array;
-  for (let i = 0; i < particleCount; i++) {
-    arr[i * 3]     += Math.sin(elapsed * 0.3 + i * 0.2) * 0.0008;
-    arr[i * 3 + 1] += Math.cos(elapsed * 0.4 + i * 0.15) * 0.0008;
-  }
-  pGeo.attributes.position.needsUpdate = true;
-
-  shapeGroup.children.forEach(m => {
-    m.rotation.x += m.userData.rot.x;
-    m.rotation.y += m.userData.rot.y;
-  });
-
-  renderer.render(scene, camera);
-}
+const cam={progress:0};
+gsap.timeline({scrollTrigger:{trigger:'#scroll-container',start:'top top',end:'bottom bottom',scrub:1.5}}).to(cam,{progress:1,duration:1,ease:'none'});
+const mouse={x:0,y:0};
+document.addEventListener('mousemove',e=>{mouse.x=(e.clientX/window.innerWidth-0.5)*2;mouse.y=(e.clientY/window.innerHeight-0.5)*2;});
+['#c0','#c1','#c2','#c3','#c4'].forEach((sel,i)=>{const el=document.querySelector(sel);if(!el)return;gsap.fromTo(el,{opacity:0,y:60},{opacity:1,y:0,scrollTrigger:{trigger:'#s'+i,start:'top 70%',end:'top 30%',scrub:1}});if(i<4){gsap.to(el,{opacity:0,y:-40,scrollTrigger:{trigger:'#s'+i,start:'bottom 65%',end:'bottom 25%',scrub:1}});}});
+window.addEventListener('scroll',()=>{const pct=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;document.getElementById('scrollBar').style.width=pct+'%';document.getElementById('nav').classList.toggle('scrolled',window.scrollY>60);});
+const fogColors=[new THREE.Color(0x04050f),new THREE.Color(0x08062a),new THREE.Color(0x0d0730),new THREE.Color(0x080622),new THREE.Color(0x04050f)];
+const bgColors=[new THREE.Color(0x04050f),new THREE.Color(0x060720),new THREE.Color(0x0a0928),new THREE.Color(0x06071a),new THREE.Color(0x04050f)];
+function lerpColors(arr,t){const ct=Math.max(0,Math.min(1,t)),idx=ct*(arr.length-1),lo=Math.floor(idx),hi=Math.min(lo+1,arr.length-1);return new THREE.Color().copy(arr[lo]).lerp(arr[hi],idx-lo);}
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);const elapsed=clock.getElapsedTime(),progress=cam.progress,t=Math.min(progress*0.85+0.02,0.97),pos=tunnelPath.getPointAt(t),look=tunnelPath.getPointAt(Math.min(t+0.015,0.999));camera.position.set(pos.x+mouse.x*0.2,pos.y-mouse.y*0.1,pos.z);camera.lookAt(look.x,look.y,look.z);scene.fog.color.copy(lerpColors(fogColors,progress));scene.background.copy(lerpColors(bgColors,progress));scene.fog.density=0.016+Math.sin(progress*Math.PI)*0.01;const arr=pGeo.attributes.position.array;for(let i=0;i<particleCount;i++){arr[i*3]+=Math.sin(elapsed*0.3+i*0.2)*0.0008;arr[i*3+1]+=Math.cos(elapsed*0.4+i*0.15)*0.0008;}pGeo.attributes.position.needsUpdate=true;shapeGroup.children.forEach(m=>{m.rotation.x+=m.userData.rot.x;m.rotation.y+=m.userData.rot.y;});renderer.render(scene,camera);}
 animate();
-
-// ---- Resize ----
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// ---- Loader ----
-window.addEventListener('load', () => {
-  setTimeout(() => document.getElementById('loader').classList.add('hidden'), 1800);
-});
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+window.addEventListener('load',()=>{setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1800);});
 </script>
 </body>
 </html>
